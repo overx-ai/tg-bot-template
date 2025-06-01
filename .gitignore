@@ -1,0 +1,7 @@
+.env
+venv
+*.iml
+*.pyc
+.idea
+*.sql
+.venv
