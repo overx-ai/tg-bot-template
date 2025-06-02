@@ -8,8 +8,9 @@ A clean, maintainable Telegram bot template with essential features and modern a
 - **⌨️ Keyboard Management** - Dynamic inline keyboards with language-aware buttons
 - **🤖 OpenRouter AI Integration** - Modern AI provider with multiple model support
 - **🆘 Optional Support Bot** - Built-in support system for user assistance
-- **💾 Simple Database** - PostgreSQL with clean user management
-- **🎛️ Click CLI** - Command-line interface with multiple options
+- **💾 Database with Migrations** - PostgreSQL with Alembic migration management
+- **🔄 Auto-Migration** - Automatic schema updates on bot startup
+- **🎛️ Click CLI** - Command-line interface with migration commands
 - **📝 Clean Architecture** - Well-organized, extensible codebase
 
 ## 📁 Project Structure
@@ -18,16 +19,22 @@ A clean, maintainable Telegram bot template with essential features and modern a
 telegram_bot_template/
 ├── __init__.py                    # Package initialization
 ├── main.py                        # Entry point with click options
+├── cli.py                         # CLI commands for migrations
 ├── config/
 │   ├── __init__.py
 │   └── settings.py               # Configuration management
 ├── core/
 │   ├── __init__.py
 │   ├── bot.py                    # Main bot class
-│   ├── database.py               # Database operations
+│   ├── database.py               # Database operations with migrations
+│   ├── migration_manager.py      # Alembic migration management
 │   ├── locale_manager.py         # Localization support
 │   ├── keyboard_manager.py       # Keyboard management
 │   └── ai_provider.py            # OpenRouter integration
+├── models/
+│   ├── __init__.py               # SQLAlchemy metadata
+│   ├── base.py                   # Base table definitions
+│   └── users.py                  # Users table schema
 ├── handlers/
 │   ├── __init__.py
 │   ├── basic.py                  # Basic commands (/start, /help, /about)
@@ -38,6 +45,14 @@ telegram_bot_template/
 └── utils/
     ├── __init__.py
     └── helpers.py                # Utility functions
+
+alembic/                           # Database migration files
+├── env.py                        # Alembic environment configuration
+├── script.py.mako               # Migration template
+└── versions/                     # Migration version files
+    └── 001_initial_users_table.py
+
+alembic.ini                       # Alembic configuration
 ```
 
 ## 🛠️ Installation
@@ -137,6 +152,77 @@ python -m telegram_bot_template.main test-db
 # Show bot statistics
 python -m telegram_bot_template.main --stats
 ```
+
+## 💾 Database Migrations
+
+The template uses Alembic for professional database schema management with automatic migration support.
+
+### Automatic Migrations
+
+By default, the bot automatically applies pending migrations on startup:
+
+```bash
+# Bot will check and apply migrations automatically
+python -m telegram_bot_template.main
+```
+
+### Manual Migration Commands
+
+```bash
+# Check migration status
+telegram-bot-template db status
+
+# Apply all pending migrations
+telegram-bot-template migrate
+
+# Create a new migration
+telegram-bot-template db revision -m "Add new table"
+
+# Apply migrations manually
+telegram-bot-template db upgrade
+
+# Rollback to previous migration
+telegram-bot-template db downgrade
+
+# Show migration history
+telegram-bot-template db history
+
+# Show current revision
+telegram-bot-template db current
+```
+
+### Migration Configuration
+
+Control migration behavior with environment variables:
+
+```env
+# Enable/disable automatic migrations (default: true)
+AUTO_MIGRATE=true
+
+# Migration timeout in seconds (default: 300)
+MIGRATION_TIMEOUT=300
+```
+
+### Creating New Migrations
+
+1. **Modify your models** in `telegram_bot_template/models/`
+2. **Generate migration**:
+   ```bash
+   telegram-bot-template db revision --autogenerate -m "Description of changes"
+   ```
+3. **Review the generated migration** in `alembic/versions/`
+4. **Apply the migration**:
+   ```bash
+   telegram-bot-template db upgrade
+   ```
+
+### Migration Best Practices
+
+- **Always review** auto-generated migrations before applying
+- **Test migrations** in a staging environment first
+- **Backup your database** before applying migrations in production
+- **Use descriptive messages** when creating migrations
+- **Keep migrations small** and focused on single changes
 
 ### Programmatic Usage
 

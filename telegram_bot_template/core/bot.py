@@ -54,9 +54,7 @@ class TelegramBot:
             logger.info("Database initialized")
 
             # Initialize locale manager
-            self.locale_manager = LocaleManager(
-                default_language=self.config.default_language
-            )
+            self.locale_manager = LocaleManager(default_language=self.config.default_language)
             logger.info("Locale manager initialized")
 
             # Initialize keyboard manager
@@ -65,10 +63,7 @@ class TelegramBot:
 
             # Initialize AI provider if configured
             if self.config.has_ai_support:
-                self.ai_provider = OpenRouterProvider(
-                    api_key=self.config.openrouter_api_key,
-                    model=self.config.openrouter_model
-                )
+                self.ai_provider = OpenRouterProvider(api_key=self.config.openrouter_api_key, model=self.config.openrouter_model)
 
                 # Test AI connection
                 if await self.ai_provider.test_connection():
@@ -84,17 +79,14 @@ class TelegramBot:
                 self.support_bot = SupportBot(
                     support_token=self.config.support_bot_token,
                     support_chat_id=self.config.support_chat_id,
-                    locale_manager=self.locale_manager
+                    locale_manager=self.locale_manager,
                 )
                 await self.support_bot.setup()
                 logger.info("Support bot initialized")
 
             # Initialize handlers
             self.basic_handlers = BasicHandlers(
-                locale_manager=self.locale_manager,
-                keyboard_manager=self.keyboard_manager,
-                database=self.database,
-                config=self.config
+                locale_manager=self.locale_manager, keyboard_manager=self.keyboard_manager, database=self.database, config=self.config
             )
 
             self.message_handler = MessageHandlerClass(
@@ -102,7 +94,7 @@ class TelegramBot:
                 keyboard_manager=self.keyboard_manager,
                 database=self.database,
                 ai_provider=self.ai_provider,
-                config=self.config
+                config=self.config,
             )
 
             # Create Telegram application
@@ -131,40 +123,19 @@ class TelegramBot:
         self.app.add_handler(CallbackQueryHandler(self.basic_handlers.callback_query_handler))
 
         # Message handlers
-        self.app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            self.message_handler.handle_text_message
-        ))
+        self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handler.handle_text_message))
 
-        self.app.add_handler(MessageHandler(
-            filters.PHOTO,
-            self.message_handler.handle_photo
-        ))
+        self.app.add_handler(MessageHandler(filters.PHOTO, self.message_handler.handle_photo))
 
-        self.app.add_handler(MessageHandler(
-            filters.Document.ALL,
-            self.message_handler.handle_document
-        ))
+        self.app.add_handler(MessageHandler(filters.Document.ALL, self.message_handler.handle_document))
 
-        self.app.add_handler(MessageHandler(
-            filters.VOICE,
-            self.message_handler.handle_voice
-        ))
+        self.app.add_handler(MessageHandler(filters.VOICE, self.message_handler.handle_voice))
 
-        self.app.add_handler(MessageHandler(
-            filters.Sticker.ALL,
-            self.message_handler.handle_sticker
-        ))
+        self.app.add_handler(MessageHandler(filters.Sticker.ALL, self.message_handler.handle_sticker))
 
-        self.app.add_handler(MessageHandler(
-            filters.LOCATION,
-            self.message_handler.handle_location
-        ))
+        self.app.add_handler(MessageHandler(filters.LOCATION, self.message_handler.handle_location))
 
-        self.app.add_handler(MessageHandler(
-            filters.CONTACT,
-            self.message_handler.handle_contact
-        ))
+        self.app.add_handler(MessageHandler(filters.CONTACT, self.message_handler.handle_contact))
 
         logger.info("All handlers added to application")
 
@@ -186,10 +157,7 @@ class TelegramBot:
             await self._send_startup_notification()
 
             # Start polling
-            await self.app.updater.start_polling(
-                drop_pending_updates=False,
-                allowed_updates=None
-            )
+            await self.app.updater.start_polling(drop_pending_updates=False, allowed_updates=None)
 
             logger.info(f"{self.config.bot_name} is now running...")
 
@@ -260,7 +228,7 @@ class TelegramBot:
             "bot_name": self.config.bot_name,
             "bot_version": self.config.bot_version,
             "ai_support": self.config.has_ai_support,
-            "support_bot": self.config.has_support_bot
+            "support_bot": self.config.has_support_bot,
         }
 
         if self.database:

@@ -11,18 +11,18 @@ class ColoredFormatter(logging.Formatter):
 
     # ANSI color codes
     COLORS = {
-        'DEBUG': '\033[37m',  # White
-        'INFO': '\033[34m',  # Blue
-        'WARNING': '\033[33m',  # Yellow
-        'ERROR': '\033[31m',  # Red
-        'CRITICAL': '\033[91m',  # Bright Red
+        "DEBUG": "\033[37m",  # White
+        "INFO": "\033[34m",  # Blue
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[91m",  # Bright Red
     }
-    RESET = '\033[0m'  # Reset color
+    RESET = "\033[0m"  # Reset color
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Check if output is to a terminal (supports colors)
-        self.use_colors = hasattr(sys.stderr, 'isatty') and sys.stderr.isatty()
+        self.use_colors = hasattr(sys.stderr, "isatty") and sys.stderr.isatty()
 
     def format(self, record):
         if self.use_colors and record.levelname in self.COLORS:
@@ -50,8 +50,7 @@ def setup_logging():
     """Set up enhanced logging configuration with colors and detailed format."""
     # Create formatter
     formatter = ColoredFormatter(
-        fmt='%(asctime)s %(levelname)s %(filename)s:%(funcName)s:%(lineno)d - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(asctime)s %(levelname)s %(filename)s:%(funcName)s:%(lineno)d - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Get root logger
@@ -68,7 +67,7 @@ def setup_logging():
     console_handler.setLevel(logging.INFO)
 
     # Configure stream to handle Unicode characters properly
-    console_handler.stream.reconfigure(errors='backslashreplace')
+    console_handler.stream.reconfigure(errors="backslashreplace")
 
     # Add handler to root logger
     root_logger.addHandler(console_handler)
@@ -82,10 +81,10 @@ logger = logging.getLogger(__name__)
 
 def escape_markdown(text: str) -> str:
     """Escape special characters for Telegram MarkdownV2 formatting.
-    
+
     Args:
         text: The input text to escape
-        
+
     Returns:
         Escaped text safe for MarkdownV2
     """
@@ -98,11 +97,11 @@ def escape_markdown(text: str) -> str:
 
 def format_message(template: str, **kwargs) -> str:
     """Format a message template with provided arguments.
-    
+
     Args:
         template: Message template with placeholders
         **kwargs: Arguments to fill placeholders
-        
+
     Returns:
         Formatted message
     """
@@ -118,11 +117,11 @@ def format_message(template: str, **kwargs) -> str:
 
 def split_long_message(message: str, max_length: int = 4000) -> List[str]:
     """Split a long message into multiple parts that fit within Telegram's limits.
-    
+
     Args:
         message: The message to split
         max_length: Maximum length per part (default: 4000)
-        
+
     Returns:
         List of message parts
     """
@@ -138,11 +137,11 @@ def split_long_message(message: str, max_length: int = 4000) -> List[str]:
             break
 
         # Find appropriate split points (prefer paragraph breaks, then line breaks, then spaces)
-        split_point = remaining[:max_length].rfind('\n\n')
+        split_point = remaining[:max_length].rfind("\n\n")
         if split_point == -1:
-            split_point = remaining[:max_length].rfind('\n')
+            split_point = remaining[:max_length].rfind("\n")
         if split_point == -1:
-            split_point = remaining[:max_length].rfind(' ')
+            split_point = remaining[:max_length].rfind(" ")
         if split_point == -1:
             split_point = max_length
 
@@ -154,45 +153,45 @@ def split_long_message(message: str, max_length: int = 4000) -> List[str]:
 
 def clean_text(text: str) -> str:
     """Clean text by removing extra whitespace and normalizing line breaks.
-    
+
     Args:
         text: Text to clean
-        
+
     Returns:
         Cleaned text
     """
     # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"\s+", " ", text)
 
     # Normalize line breaks
-    text = re.sub(r'\n\s*\n', '\n\n', text)
+    text = re.sub(r"\n\s*\n", "\n\n", text)
 
     return text.strip()
 
 
 def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """Truncate text to a maximum length.
-    
+
     Args:
         text: Text to truncate
         max_length: Maximum length
         suffix: Suffix to add when truncating
-        
+
     Returns:
         Truncated text
     """
     if len(text) <= max_length:
         return text
 
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix
 
 
 def extract_command_args(text: str) -> tuple:
     """Extract command and arguments from a message.
-    
+
     Args:
         text: Message text starting with a command
-        
+
     Returns:
         Tuple of (command, args_list)
     """
@@ -206,15 +205,14 @@ def extract_command_args(text: str) -> tuple:
     return command, args
 
 
-def format_user_mention(user_id: int, username: Optional[str] = None,
-                        first_name: Optional[str] = None) -> str:
+def format_user_mention(user_id: int, username: Optional[str] = None, first_name: Optional[str] = None) -> str:
     """Format a user mention for display.
-    
+
     Args:
         user_id: User's Telegram ID
         username: User's username (optional)
         first_name: User's first name (optional)
-        
+
     Returns:
         Formatted user mention
     """
@@ -228,11 +226,11 @@ def format_user_mention(user_id: int, username: Optional[str] = None,
 
 def validate_language_code(language: str, supported_languages: List[str]) -> str:
     """Validate and normalize language code.
-    
+
     Args:
         language: Language code to validate
         supported_languages: List of supported language codes
-        
+
     Returns:
         Validated language code or default 'en'
     """
@@ -247,15 +245,15 @@ def validate_language_code(language: str, supported_languages: List[str]) -> str
             return supported
 
     # Default to English
-    return 'en'
+    return "en"
 
 
 def format_duration(seconds: int) -> str:
     """Format duration in seconds to human-readable format.
-    
+
     Args:
         seconds: Duration in seconds
-        
+
     Returns:
         Formatted duration string
     """
@@ -273,10 +271,10 @@ def format_duration(seconds: int) -> str:
 
 def format_file_size(size_bytes: int) -> str:
     """Format file size in bytes to human-readable format.
-    
+
     Args:
         size_bytes: Size in bytes
-        
+
     Returns:
         Formatted size string
     """
@@ -292,33 +290,33 @@ def format_file_size(size_bytes: int) -> str:
 
 def is_valid_telegram_token(token: str) -> bool:
     """Validate Telegram bot token format.
-    
+
     Args:
         token: Bot token to validate
-        
+
     Returns:
         True if token format is valid
     """
     # Telegram bot token format: <bot_id>:<bot_secret>
     # bot_id is numeric, bot_secret is alphanumeric with some special chars
-    pattern = r'^\d+:[A-Za-z0-9_-]+$'
+    pattern = r"^\d+:[A-Za-z0-9_-]+$"
     return bool(re.match(pattern, token))
 
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize filename by removing/replacing invalid characters.
-    
+
     Args:
         filename: Original filename
-        
+
     Returns:
         Sanitized filename
     """
     # Remove or replace invalid characters
-    filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    filename = re.sub(r'[<>:"/\\|?*]', "_", filename)
 
     # Remove leading/trailing dots and spaces
-    filename = filename.strip('. ')
+    filename = filename.strip(". ")
 
     # Ensure filename is not empty
     if not filename:
@@ -329,11 +327,11 @@ def sanitize_filename(filename: str) -> str:
 
 def parse_callback_data(callback_data: str, separator: str = "_") -> List[str]:
     """Parse callback data into components.
-    
+
     Args:
         callback_data: Callback data string
         separator: Separator character
-        
+
     Returns:
         List of callback data components
     """
@@ -342,11 +340,11 @@ def parse_callback_data(callback_data: str, separator: str = "_") -> List[str]:
 
 def build_callback_data(*components, separator: str = "_") -> str:
     """Build callback data from components.
-    
+
     Args:
         *components: Components to join
         separator: Separator character
-        
+
     Returns:
         Joined callback data string
     """
@@ -355,10 +353,10 @@ def build_callback_data(*components, separator: str = "_") -> str:
 
 def get_user_display_name(user) -> str:
     """Get display name for a Telegram user.
-    
+
     Args:
         user: Telegram User object
-        
+
     Returns:
         User's display name
     """
@@ -374,11 +372,11 @@ def get_user_display_name(user) -> str:
 
 def format_timestamp(timestamp, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
     """Format timestamp to string.
-    
+
     Args:
         timestamp: Timestamp object
         format_str: Format string
-        
+
     Returns:
         Formatted timestamp string
     """

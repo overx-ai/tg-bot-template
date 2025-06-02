@@ -3,14 +3,14 @@ Simplified Telegram Bot Template
 
 A clean, maintainable Telegram bot template with essential features:
 - Locale management
-- Keyboard management  
+- Keyboard management
 - OpenRouter AI integration
 - Optional support bot
 - Simple user database
 
 Usage:
     from telegram_bot_template import TelegramBot, BotConfig
-    
+
     config = BotConfig.from_env()
     bot = TelegramBot(config)
     await bot.run()
