@@ -52,6 +52,37 @@ project_root/
 
 ## Python-Telegram-Bot Specific Requirements
 
+### Correct handling of callbacks and commands with one method 
+- Method has both update and query callback in signature
+- Understands user_id
+- Ensures user exists
+- Uses keyboard manager to reduce memory footprint
+- Uses locale manager to provide localized messages
+```python
+async def how_to(update: Update, context, query=None) -> None:
+    """Send a welcome message and list available services."""
+    db = context.bot_data[DB]
+
+    user_id = update.message.from_user.id if not query else query.from_user.id
+    await db.ensure_user(
+        user_id,
+        update.message.from_user.username if not query else query.from_user.username,
+        callback=partial(on_new_user_notify, context.bot),
+    )
+
+    reply_markup = KEYBOARD_MANAGER.back_keyboard
+    if not query:
+        await update.message.reply_markdown(
+            LOCALE_MANAGER.get("how_to_message"), reply_markup=reply_markup
+        )
+    else:
+        await query.edit_message_text(
+            LOCALE_MANAGER.get("how_to_message"),
+            reply_markup=reply_markup,
+            parse_mode="Markdown",
+        )
+```
+
 ### Async/Await Implementation
 - Use asyncio throughout the application
 - Implement proper async context managers
