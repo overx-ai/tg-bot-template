@@ -49,7 +49,12 @@ class DatabaseManager:
                     raise RuntimeError("Database migration failed")
 
             # Create connection pool
-            self._pool = await asyncpg.create_pool(self.database_url)
+            # asyncpg expects DSN without the +asyncpg dialect part
+            asyncpg_compatible_dsn = self.database_url
+            if "postgresql+asyncpg://" in asyncpg_compatible_dsn:
+                asyncpg_compatible_dsn = asyncpg_compatible_dsn.replace("postgresql+asyncpg://", "postgresql://")
+            
+            self._pool = await asyncpg.create_pool(asyncpg_compatible_dsn)
             logger.info("Database setup completed successfully")
         except Exception as e:
             logger.error(f"Database setup failed: {e}")

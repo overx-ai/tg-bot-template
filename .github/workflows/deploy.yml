@@ -51,6 +51,8 @@ jobs:
       run: |
         source .venv/bin/activate
         uv run pytest tests/ -v
+      env:
+        SKIP_DOCKER_TESTS: ${{ secrets.SKIP_DOCKER_TESTS }}
 
     - name: Validate configuration
       run: |

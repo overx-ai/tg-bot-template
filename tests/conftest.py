@@ -19,9 +19,10 @@ def postgres_db_url():
     try:
         # Use a light image like postgres:16-alpine
         with PostgresContainer("postgres:16-alpine") as postgres_container:
-            # Ensure the driver is asyncpg for compatibility with DatabaseManager
+            # Get the SQLAlchemy-style DSN which includes +asyncpg
+            # This is what SQLAlchemy's create_async_engine expects
             dsn = postgres_container.get_connection_url(driver="asyncpg")
-            logger.info(f"PostgreSQL container started. DSN: {dsn}")
+            logger.info(f"PostgreSQL container started. DSN for SQLAlchemy: {dsn}")
             yield dsn
             logger.info("PostgreSQL container stopped.")
     except Exception as e:
