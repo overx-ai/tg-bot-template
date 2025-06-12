@@ -1,7 +1,9 @@
 # Python Telegram Bot Development Instructions
 
 ## Main Objective
-Create high-quality, maintainable Telegram bots using python-telegram-bot library with proper OOP design, following DRY and SOLID principles. Code must be well-structured, supportable, and use UV for dependency management.
+Create high-quality, maintainable Python code for telegram bots using python-telegram-bot library with proper OOP design, following DRY and SOLID principles.
+Code should be reusable as much as possible. Functions and methods signatures should be extendable to support multiple use cases with one function or method. 
+Code must be well-structured, supportable, and must use UV for dependency management.
 
 ## Code Architecture & Design Principles
 
@@ -12,18 +14,13 @@ Create high-quality, maintainable Telegram bots using python-telegram-bot librar
 - Encapsulate data and behavior within appropriate classes
 - Use dependency injection for better testability and flexibility
 
-### SOLID Principles Implementation
-- **Single Responsibility**: Each class should have one reason to change
-- **Open/Closed**: Classes should be open for extension, closed for modification
-- **Liskov Substitution**: Derived classes must be substitutable for their base classes
-- **Interface Segregation**: Create specific interfaces rather than general-purpose ones
-- **Dependency Inversion**: Depend on abstractions, not concretions
-
 ### DRY (Don't Repeat Yourself)
 - Extract common functionality into reusable components
 - Create utility classes and helper functions for repeated operations
 - Use configuration classes for shared constants and settings
 - Implement decorators for cross-cutting concerns (logging, error handling, rate limiting)
+- If some method or function have similar functionality try to reuse it.
+- Signature of function might be extended with optional params
 
 ## File Structure & Size Constraints
 
@@ -52,12 +49,14 @@ project_root/
 
 ## Python-Telegram-Bot Specific Requirements
 
-### Correct handling of callbacks and commands with one method 
+### Correct handling of Telegram callbacks and commands with one method 
 - Method has both update and query callback in signature
 - Understands user_id
 - Ensures user exists
 - Uses keyboard manager to reduce memory footprint
 - Uses locale manager to provide localized messages
+- Replies to user using query or update
+- Such method is appropriate to handle both telegram callback data and commands
 ```python
 async def how_to(update: Update, context, query=None) -> None:
     """Send a welcome message and list available services."""
@@ -93,14 +92,9 @@ async def how_to(update: Update, context, query=None) -> None:
 ### Handler Organization
 - Create separate handler classes for different bot functionalities
 - Use command handlers, message handlers, and callback query handlers appropriately
+- Try to handle both commands and callbacks via same functions
 - Implement conversation handlers for multi-step interactions
 - Group related handlers into logical modules
-
-### Bot Architecture Patterns
-- Use Application class from python-telegram-bot v20+
-- Implement proper bot initialization and shutdown procedures
-- Use context objects effectively for state management
-- Create service layer for business logic separation from handlers
 
 ## Code Quality Standards
 

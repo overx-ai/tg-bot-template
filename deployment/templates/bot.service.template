@@ -1,0 +1,42 @@
+[Unit]
+Description=${BOT_DESCRIPTION} TG Bot Service
+After=syslog.target network.target postgresql.service
+
+[Service]
+User=${USER}
+WorkingDirectory=${WORKING_DIR}
+ExecStart=${PYTHON_PATH} ${MAIN_SCRIPT}
+
+# Improved restart settings
+Restart=always
+RestartSec=10s
+StartLimitInterval=5min
+StartLimitBurst=10
+
+# Ensure clean termination
+TimeoutStopSec=30s
+KillMode=mixed
+
+# Standard output logging
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables
+Environment=PYTHONUNBUFFERED=1
+Environment="PATH=/usr/bin:${WORKING_DIR}/.venv/bin:${WORKING_DIR}"
+Environment=VIRTUAL_ENV=${WORKING_DIR}/.venv
+Environment=PYTHONPATH=${WORKING_DIR}:.
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=${WORKING_DIR}
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

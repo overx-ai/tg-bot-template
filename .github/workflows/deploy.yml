@@ -1,0 +1,194 @@
+name: Deploy Telegram Bot
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      force_deploy:
+        description: 'Force deployment (skip health checks)'
+        required: false
+        default: false
+        type: boolean
+      skip_backup:
+        description: 'Skip database backup'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  DEPLOY_USER: jack
+  DEPLOY_PATH: /home/jack/JACK
+  REPO_NAME: learn-words
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv venv
+        source .venv/bin/activate
+        uv sync
+
+    - name: Run tests
+      run: |
+        source .venv/bin/activate
+        python -m pytest tests/ -v
+
+    - name: Validate configuration
+      run: |
+        source .venv/bin/activate
+        python -m telegram_bot_template.main --dry-run
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to server
+      run: |
+        # Set deployment options
+        DEPLOY_OPTIONS=""
+        
+        if [[ "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
+          DEPLOY_OPTIONS="$DEPLOY_OPTIONS --force"
+        fi
+        
+        if [[ "${{ github.event.inputs.skip_backup }}" == "true" ]]; then
+          DEPLOY_OPTIONS="$DEPLOY_OPTIONS --no-backup"
+        fi
+        
+        # Execute deployment
+        ssh ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          set -e
+          
+          # Navigate to deployment directory
+          cd ${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}
+          
+          # Pull latest changes
+          git fetch origin
+          git checkout main
+          git pull origin main
+          
+          # Make deployment scripts executable
+          chmod +x deployment/*.sh
+          
+          # Run deployment
+          ./deployment/deploy.sh \
+            --repo-url "${{ github.repositoryUrl }}" \
+            --branch "main" \
+            --env-file "/home/${{ env.DEPLOY_USER }}/configs/.env" \
+            $DEPLOY_OPTIONS
+        EOF
+
+    - name: Verify deployment
+      run: |
+        ssh ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          # Check service status
+          systemctl is-active ${{ env.REPO_NAME }}.service
+          
+          # Run health check
+          cd ${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}
+          ./deployment/health-check.sh --post-deployment
+        EOF
+
+    - name: Notify success
+      if: success()
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"✅ Deployment successful for ${{ github.repository }} (commit: ${{ github.sha }})", "channel":"#deployments"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi
+
+    - name: Notify failure
+      if: failure()
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ Deployment failed for ${{ github.repository }} (commit: ${{ github.sha }})", "channel":"#deployments"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi
+
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure() && needs.deploy.result == 'failure'
+    needs: [test, deploy]
+    
+    steps:
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Automatic rollback
+      run: |
+        ssh ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          set -e
+          
+          cd ${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}
+          
+          # Find latest backup
+          LATEST_BACKUP=$(find deployment/backups -name "backup_*.sql*" -type f | sort -r | head -1)
+          
+          if [[ -n "$LATEST_BACKUP" ]]; then
+            echo "Rolling back using backup: $LATEST_BACKUP"
+            ./deployment/rollback.sh \
+              --backup-file "$LATEST_BACKUP" \
+              --git-commit "HEAD~1" \
+              --force
+          else
+            echo "No backup found, rolling back code only"
+            ./deployment/rollback.sh \
+              --no-database \
+              --git-commit "HEAD~1" \
+              --force
+          fi
+        EOF
+
+    - name: Notify rollback
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"🔄 Automatic rollback completed for ${{ github.repository }}", "channel":"#deployments"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi

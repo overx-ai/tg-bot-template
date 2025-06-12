@@ -27,6 +27,7 @@ class BotConfig:
     # Optional support bot settings
     support_bot_token: Optional[str] = None
     support_chat_id: Optional[int] = None
+    MAINTAINER_CHAT_ID: Optional[int] = None  # For critical alerts
 
     # Database migration settings
     auto_migrate: bool = True
@@ -65,6 +66,9 @@ class BotConfig:
         support_chat_id_str = os.getenv("SUPPORT_CHAT_ID")
         support_chat_id = int(support_chat_id_str) if support_chat_id_str else None
 
+        maintainer_chat_id_str = os.getenv("MAINTAINER_CHAT_ID")
+        maintainer_chat_id = int(maintainer_chat_id_str) if maintainer_chat_id_str else None
+
         # Bot metadata
         bot_name = os.getenv("BOT_NAME", "Telegram Bot")
         bot_description = os.getenv("BOT_DESCRIPTION", "A simple Telegram bot")
@@ -98,6 +102,7 @@ class BotConfig:
             bot_description=bot_description,
             bot_version=bot_version,
             log_level=log_level,
+            MAINTAINER_CHAT_ID=maintainer_chat_id,
         )
 
     @property
