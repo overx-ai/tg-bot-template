@@ -44,7 +44,7 @@ class DatabaseManager:
             # Run migrations first if auto_migrate is enabled
             if self.auto_migrate:
                 logger.info("Checking for pending database migrations...")
-                migration_success = self._migration_manager.ensure_database_ready(auto_migrate=True)
+                migration_success = await self._migration_manager.ensure_database_ready(auto_migrate=True) # Added await
                 if not migration_success:
                     raise RuntimeError("Database migration failed")
 

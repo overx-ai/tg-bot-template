@@ -1,3 +1,4 @@
+[![Deploy Telegram Bot](https://github.com/hustlestar/tg-bot-template/actions/workflows/deploy.yml/badge.svg)](https://github.com/hustlestar/tg-bot-template/actions/workflows/deploy.yml)
 # Simplified Telegram Bot Template
 
 A clean, maintainable Telegram bot template with essential features and modern architecture.

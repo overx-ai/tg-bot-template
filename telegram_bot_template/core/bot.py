@@ -2,11 +2,11 @@
 
 import asyncio
 import logging
-import signal # Added for graceful shutdown
-import platform # Added for OS check for signal handlers
+import signal
+import platform
 from typing import Optional
 
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes # Added ContextTypes
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
 from telegram_bot_template.config.settings import BotConfig
 from telegram_bot_template.core.ai_provider import OpenRouterProvider, MockAIProvider

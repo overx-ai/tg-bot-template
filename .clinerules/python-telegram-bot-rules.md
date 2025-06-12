@@ -124,6 +124,7 @@ async def how_to(update: Update, context, query=None) -> None:
 - Pin dependency versions for production stability
 - Use dependency groups for development, testing, and optional features
 - Keep uv.lock file in version control
+- Always use UV to run pytest and python
 
 ### Virtual Environment
 - Use UV to create and manage virtual environments

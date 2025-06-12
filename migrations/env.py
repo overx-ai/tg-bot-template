@@ -1,9 +1,12 @@
+import asyncio # Added
 import os
 import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+# Use create_async_engine for async support
+from sqlalchemy.ext.asyncio import create_async_engine # Added
+from sqlalchemy import engine_from_config # Kept for offline or if needed
 
 from alembic import context
 
@@ -69,7 +72,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
+async def run_migrations_online() -> None: # Changed to async
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
@@ -77,28 +80,35 @@ def run_migrations_online() -> None:
 
     """
     # Override the sqlalchemy.url in the configuration
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = get_database_url()
-
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    # This part remains synchronous as it prepares config for the engine
+    db_url = get_database_url()
+    
+    # Create an async engine
+    connectable = create_async_engine(
+        db_url,
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-            compare_server_default=True,
-        )
+    async with connectable.connect() as connection: # Use async connect
+        # Define a synchronous callback for Alembic operations
+        def do_run_migrations(connection_sync):
+            context.configure(
+                connection=connection_sync,
+                target_metadata=target_metadata,
+                compare_type=True,
+                compare_server_default=True,
+                # include_schemas=True, # Add if using schemas
+            )
+            with context.begin_transaction():
+                context.run_migrations()
 
-        with context.begin_transaction():
-            context.run_migrations()
+        # Run the synchronous Alembic operations using run_sync
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose() # Dispose of the async engine
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online()
+    asyncio.run(run_migrations_online()) # Run the async function

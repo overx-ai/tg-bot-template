@@ -5,6 +5,7 @@ migrations with the bot startup process, allowing for automatic schema
 updates while maintaining the existing asyncpg-based database operations.
 """
 
+import asyncio # Added
 import logging
 import os
 from pathlib import Path
@@ -14,7 +15,7 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine # Changed
 
 logger = logging.getLogger(__name__)
 
@@ -49,20 +50,23 @@ class MigrationManager:
         # Override database URL in configuration
         self.alembic_cfg.set_main_option("sqlalchemy.url", self.database_url)
 
-    def get_current_revision(self) -> Optional[str]:
-        """Get the current database revision.
-
-        Returns:
-            Current revision ID or None if no migrations have been applied
-        """
+    async def get_current_revision(self) -> Optional[str]: # Changed to async
+        """Get the current database revision asynchronously."""
+        engine = create_async_engine(self.database_url)
         try:
-            engine = create_engine(self.database_url)
-            with engine.connect() as connection:
-                context = MigrationContext.configure(connection)
-                return context.get_current_revision()
+            async with engine.connect() as connection:
+                # Alembic context operations are synchronous, run them in a sync manner
+                def get_rev_sync(conn_sync):
+                    migration_context = MigrationContext.configure(conn_sync)
+                    return migration_context.get_current_revision()
+                
+                current_rev = await connection.run_sync(get_rev_sync)
+                return current_rev
         except Exception as e:
             logger.error(f"Failed to get current revision: {e}")
             return None
+        finally:
+            await engine.dispose()
 
     def get_head_revision(self) -> Optional[str]:
         """Get the latest available revision.
@@ -77,14 +81,10 @@ class MigrationManager:
             logger.error(f"Failed to get head revision: {e}")
             return None
 
-    def has_pending_migrations(self) -> bool:
-        """Check if there are pending migrations to apply.
-
-        Returns:
-            True if there are pending migrations, False otherwise
-        """
-        current = self.get_current_revision()
-        head = self.get_head_revision()
+    async def has_pending_migrations(self) -> bool: # Changed to async
+        """Check if there are pending migrations to apply asynchronously."""
+        current = await self.get_current_revision() # Await async call
+        head = self.get_head_revision() # This can remain sync as it reads from files
 
         if head is None:
             # No migrations exist
@@ -96,45 +96,56 @@ class MigrationManager:
 
         return current != head
 
-    def create_migration(self, message: str, autogenerate: bool = True) -> str:
-        """Create a new migration.
-
-        Args:
-            message: Migration description
-            autogenerate: Whether to auto-generate migration from model changes
-
-        Returns:
-            Generated revision ID
-        """
+    async def create_migration(self, message: str, autogenerate: bool = True) -> str: # Changed to async
+        """Create a new migration asynchronously."""
         try:
+            # alembic.command.revision is synchronous
             if autogenerate:
-                revision = command.revision(self.alembic_cfg, message=message, autogenerate=True)
+                rev_obj = await asyncio.to_thread(
+                    command.revision, self.alembic_cfg, message=message, autogenerate=True
+                )
             else:
-                revision = command.revision(self.alembic_cfg, message=message)
+                rev_obj = await asyncio.to_thread(
+                    command.revision, self.alembic_cfg, message=message
+                )
+            
+            if rev_obj is None: # command.revision can return None or a list of Script objects
+                # Handle cases where multiple heads might cause issues or no revision is created
+                logger.warning(f"Alembic command.revision did not return a new revision object for message: {message}")
+                # Attempt to get the latest head if no specific revision object was returned directly
+                # This is a fallback and might need adjustment based on how `command.revision` behaves with multiple heads
+                new_head = self.get_head_revision()
+                if not new_head:
+                    raise RuntimeError("Failed to create migration and could not determine new head.")
+                logger.info(f"Created migration (head determined): {new_head} - {message}")
+                return new_head
 
-            logger.info(f"Created migration: {revision.revision} - {message}")
-            return revision.revision
+            # If command.revision returns a single Script object (common case)
+            if not isinstance(rev_obj, list):
+                 new_revision_id = rev_obj.revision
+            # If it returns a list of Script objects (e.g. for multiple heads, though less common for basic revision)
+            # We'll assume the first one or the one that is not None. This might need refinement.
+            elif rev_obj:
+                new_revision_id = rev_obj[0].revision # Take the first one
+            else: # Empty list
+                raise RuntimeError("Alembic command.revision returned an empty list.")
+
+            logger.info(f"Created migration: {new_revision_id} - {message}")
+            return new_revision_id
         except Exception as e:
             logger.error(f"Failed to create migration: {e}")
             raise
 
-    def apply_migrations(self, target_revision: str = "head") -> bool:
-        """Apply migrations to the database.
-
-        Args:
-            target_revision: Target revision to migrate to (default: "head")
-
-        Returns:
-            True if migrations were applied successfully, False otherwise
-        """
+    async def apply_migrations(self, target_revision: str = "head") -> bool: # Changed to async
+        """Apply migrations to the database asynchronously."""
         try:
-            current = self.get_current_revision()
+            current = await self.get_current_revision() # Await async call
             logger.info(f"Applying migrations from {current} to {target_revision}")
 
-            # Apply migrations
-            command.upgrade(self.alembic_cfg, target_revision)
+            # alembic.command.upgrade is synchronous
+            await asyncio.to_thread(command.upgrade, self.alembic_cfg, target_revision)
 
-            new_revision = self.get_current_revision()
+            new_revision = await self.get_current_revision() # Await async call
             logger.info(f"Successfully applied migrations. Current revision: {new_revision}")
             return True
 
@@ -142,23 +153,16 @@ class MigrationManager:
             logger.error(f"Failed to apply migrations: {e}")
             return False
 
-    def rollback_migration(self, target_revision: str = "-1") -> bool:
-        """Rollback migrations to a specific revision.
-
-        Args:
-            target_revision: Target revision to rollback to (default: "-1" for previous)
-
-        Returns:
-            True if rollback was successful, False otherwise
-        """
+    async def rollback_migration(self, target_revision: str = "-1") -> bool: # Changed to async
+        """Rollback migrations to a specific revision asynchronously."""
         try:
-            current = self.get_current_revision()
+            current = await self.get_current_revision() # Await async call
             logger.info(f"Rolling back migrations from {current} to {target_revision}")
 
-            # Rollback migrations
-            command.downgrade(self.alembic_cfg, target_revision)
+            # alembic.command.downgrade is synchronous
+            await asyncio.to_thread(command.downgrade, self.alembic_cfg, target_revision)
 
-            new_revision = self.get_current_revision()
+            new_revision = await self.get_current_revision() # Await async call
             logger.info(f"Successfully rolled back migrations. Current revision: {new_revision}")
             return True
 
@@ -166,57 +170,43 @@ class MigrationManager:
             logger.error(f"Failed to rollback migrations: {e}")
             return False
 
-    def get_migration_history(self) -> list:
-        """Get migration history.
-
-        Returns:
-            List of migration information
-        """
+    async def get_migration_history(self) -> list: # Changed to async
+        """Get migration history asynchronously."""
         try:
-            script = ScriptDirectory.from_config(self.alembic_cfg)
-            revisions = []
+            script = ScriptDirectory.from_config(self.alembic_cfg) # This is sync, reads files
+            current_rev = await self.get_current_revision() # Await async call
+            history = []
 
-            for revision in script.walk_revisions():
-                revisions.append(
+            for rev_script in script.walk_revisions():
+                history.append(
                     {
-                        "revision": revision.revision,
-                        "down_revision": revision.down_revision,
-                        "description": revision.doc,
-                        "is_current": revision.revision == self.get_current_revision(),
+                        "revision": rev_script.revision,
+                        "down_revision": rev_script.down_revision,
+                        "description": rev_script.doc,
+                        "is_current": rev_script.revision == current_rev,
                     }
                 )
-
-            return revisions
+            return history
         except Exception as e:
             logger.error(f"Failed to get migration history: {e}")
             return []
 
-    def ensure_database_ready(self, auto_migrate: bool = True) -> bool:
-        """Ensure database is ready by applying pending migrations.
-
-        This method is designed to be called during bot startup to automatically
-        handle database schema updates.
-
-        Args:
-            auto_migrate: Whether to automatically apply pending migrations
-
-        Returns:
-            True if database is ready, False if there were errors
-        """
+    async def ensure_database_ready(self, auto_migrate: bool = True) -> bool: # Changed to async
+        """Ensure database is ready by applying pending migrations asynchronously."""
         try:
             logger.info("Checking database migration status...")
 
-            current = self.get_current_revision()
-            head = self.get_head_revision()
+            current = await self.get_current_revision() # Await async call
+            head = self.get_head_revision() # Sync call
 
             if head is None:
                 logger.warning("No migrations found. Database schema management is not initialized.")
-                return True
+                return True # Or False, depending on desired behavior for "no migrations"
 
             if current is None:
                 logger.info("Database not initialized. Setting up initial schema...")
                 if auto_migrate:
-                    return self.apply_migrations()
+                    return await self.apply_migrations() # Await async call
                 else:
                     logger.warning("Auto-migration disabled. Database needs manual migration.")
                     return False
@@ -225,32 +215,27 @@ class MigrationManager:
                 logger.info(f"Database is up to date (revision: {current})")
                 return True
 
+            # Pending migrations exist
             if auto_migrate:
                 logger.info(f"Pending migrations detected. Upgrading from {current} to {head}...")
-                return self.apply_migrations()
+                return await self.apply_migrations() # Await async call
             else:
-                logger.warning(f"Pending migrations detected but auto-migration disabled. " f"Current: {current}, Head: {head}")
+                logger.warning(
+                    f"Pending migrations detected but auto-migration disabled. "
+                    f"Current: {current}, Head: {head}"
+                )
                 return False
 
         except Exception as e:
             logger.error(f"Failed to ensure database readiness: {e}")
             return False
 
-    def stamp_database(self, revision: str = "head") -> bool:
-        """Stamp the database with a specific revision without running migrations.
-
-        This is useful for marking an existing database as being at a specific
-        migration state without actually running the migration scripts.
-
-        Args:
-            revision: Revision to stamp the database with
-
-        Returns:
-            True if stamping was successful, False otherwise
-        """
+    async def stamp_database(self, revision: str = "head") -> bool: # Changed to async
+        """Stamp the database with a specific revision asynchronously."""
         try:
             logger.info(f"Stamping database with revision: {revision}")
-            command.stamp(self.alembic_cfg, revision)
+            # alembic.command.stamp is synchronous
+            await asyncio.to_thread(command.stamp, self.alembic_cfg, revision)
             logger.info("Database stamped successfully")
             return True
         except Exception as e:

@@ -27,7 +27,7 @@ on:
 env:
   DEPLOY_USER: jack
   DEPLOY_PATH: /home/jack/JACK
-  REPO_NAME: learn-words
+  REPO_NAME: tg-bot-template
 
 jobs:
   test:
@@ -51,21 +51,22 @@ jobs:
         uv venv
         source .venv/bin/activate
         uv sync
+        uv sync --extra dev
 
     - name: Run tests
       run: |
         source .venv/bin/activate
-        python -m pytest tests/ -v
+        uv run pytest tests/ -v
 
     - name: Validate configuration
       run: |
         source .venv/bin/activate
-        python -m telegram_bot_template.main --dry-run
+        uv run telegram_bot_template.main --dry-run
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
     
     steps:
     - name: Checkout code
@@ -102,8 +103,8 @@ jobs:
           
           # Pull latest changes
           git fetch origin
-          git checkout main
-          git pull origin main
+          git checkout master
+          git pull origin master
           
           # Make deployment scripts executable
           chmod +x deployment/*.sh
@@ -111,7 +112,7 @@ jobs:
           # Run deployment
           ./deployment/deploy.sh \
             --repo-url "${{ github.repositoryUrl }}" \
-            --branch "main" \
+            --branch "master" \
             --env-file "/home/${{ env.DEPLOY_USER }}/configs/.env" \
             $DEPLOY_OPTIONS
         EOF

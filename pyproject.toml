@@ -39,7 +39,9 @@ dev = [
     "black>=23.0.0",
     "isort>=5.0.0",
     "mypy>=1.0.0",
-    "coverage>=7.0.0"
+    "coverage>=7.0.0",
+    # "aiosqlite>=0.19.0", # No longer primary for tests if using Dockerized Postgres
+    "testcontainers[postgres]>=3.7.0" # For Dockerized PostgreSQL in tests
 ]
 
 [project.scripts]
@@ -97,6 +99,7 @@ strict_equality = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session" # Added to address deprecation warning
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
