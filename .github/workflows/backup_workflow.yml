@@ -1,0 +1,73 @@
+name: Database Backup
+
+on:
+  workflow_dispatch: # Allows manual triggering
+    inputs:
+      backup_name_suffix:
+        description: 'Optional suffix for the backup file name'
+        required: false
+        default: ''
+        type: string
+  #schedule:
+  #  - cron: '0 2 * * *' # Runs daily at 2 AM UTC, adjust as needed
+
+env:
+  DEPLOY_USER: jack
+  DEPLOY_PATH: /home/jack/JACK
+  REPO_NAME: tg-bot-template
+
+jobs:
+  backup_database:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code (optional, if backup script is in repo)
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Perform database backup
+      run: |
+        BACKUP_OPTIONS=""
+        if [[ -n "${{ github.event.inputs.backup_name_suffix }}" ]]; then
+          BACKUP_OPTIONS="--suffix ${{ github.event.inputs.backup_name_suffix }}"
+        fi
+        
+        ssh ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          set -e
+          echo "Starting database backup..."
+          cd ${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}/deployment
+          
+          # Ensure backup script is executable
+          chmod +x backup-db.sh
+          
+          # Run backup script
+          ./backup-db.sh \$BACKUP_OPTIONS 
+          # Note: BACKUP_OPTIONS is escaped with \ to be evaluated on the remote server
+          
+          echo "Database backup completed."
+        EOF
+
+    - name: Notify backup success
+      if: success()
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"💾 Database backup successful for ${{ github.repository }}", "channel":"#backups"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi
+
+    - name: Notify backup failure
+      if: failure()
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ Database backup failed for ${{ github.repository }}", "channel":"#backups"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi

@@ -1,0 +1,139 @@
+name: Initial Server Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      db_name:
+        description: 'Name for the PostgreSQL database to be created'
+        required: true
+        default: 'telegram_bot_db'
+      db_user:
+        description: 'PostgreSQL user to own the database (default: same as DEPLOY_USER)'
+        required: false
+      bot_description:
+        description: 'Description for the systemd service'
+        required: false
+        default: 'Telegram Bot Service'
+
+env:
+  DEPLOY_USER: jack # Default deploy user, can be overridden by secrets or inputs if needed
+  DEPLOY_PATH: /home/jack/JACK # Default deploy path
+  REPO_NAME: tg-bot-template # Your repository name
+
+jobs:
+  setup_server:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add server to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Perform Initial Server Setup
+      env:
+        DB_NAME: ${{ github.event.inputs.db_name }}
+        DB_USER_INPUT: ${{ github.event.inputs.db_user }}
+        BOT_DESCRIPTION_INPUT: ${{ github.event.inputs.bot_description }}
+      run: |
+        # Determine DB_USER: use input if provided, else default to DEPLOY_USER
+        ACTUAL_DB_USER=${DB_USER_INPUT:-${DEPLOY_USER}}
+        # Determine BOT_DESCRIPTION: use input if provided, else use default from workflow
+        ACTUAL_BOT_DESCRIPTION=${BOT_DESCRIPTION_INPUT:-'${{ env.BOT_DESCRIPTION_DEFAULT || 'Telegram Bot Service' }}'}
+        
+        echo "Starting initial server setup on ${{ secrets.SERVER_HOST }}"
+        echo "Deploy User: ${{ env.DEPLOY_USER }}"
+        echo "Deploy Path: ${{ env.DEPLOY_PATH }}"
+        echo "Repo Name: ${{ env.REPO_NAME }}"
+        echo "Database Name: $DB_NAME"
+        echo "Database User: $ACTUAL_DB_USER"
+        echo "Bot Description: $ACTUAL_BOT_DESCRIPTION"
+
+        ssh -o StrictHostKeyChecking=no ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          set -e # Exit immediately if a command exits with a non-zero status.
+          
+          echo "--- Creating PostgreSQL Database ---"
+          # Check if database exists
+          if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+            echo "Database '$DB_NAME' already exists."
+          else
+            echo "Creating database '$DB_NAME' owned by '$ACTUAL_DB_USER'..."
+            # Ensure the user exists, or create it. This might need adjustment based on your PG setup.
+            # For simplicity, assuming user exists or DEPLOY_USER has rights to create DB for another user.
+            # If not, the DB user might need to be created first with appropriate permissions.
+            sudo -u postgres createdb -O "$ACTUAL_DB_USER" "$DB_NAME"
+            echo "Database '$DB_NAME' created."
+          fi
+          
+          echo "--- Setting up Systemd Service ---"
+          WORKING_DIR="${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}"
+          PYTHON_PATH="\$WORKING_DIR/.venv/bin/python" # Escaped for remote execution
+          MAIN_SCRIPT="\$WORKING_DIR/telegram_bot_template/main.py" # Escaped for remote execution
+          SERVICE_FILE_NAME="${{ env.REPO_NAME }}.service"
+          SERVICE_TEMPLATE_PATH="\$WORKING_DIR/deployment/templates/bot.service.template" # Escaped
+          REMOTE_SERVICE_FILE_PATH="/etc/systemd/system/\$SERVICE_FILE_NAME" # Escaped
+          
+          echo "Working Directory: \$WORKING_DIR"
+          echo "Python Path: \$PYTHON_PATH"
+          echo "Main Script: \$MAIN_SCRIPT"
+          echo "Service File Name: \$SERVICE_FILE_NAME"
+          
+          # Ensure deployment directory exists
+          sudo mkdir -p "\$WORKING_DIR/deployment/templates" # Escaped
+          sudo chown -R ${{ env.DEPLOY_USER }}:${{ env.DEPLOY_USER }} "${{ env.DEPLOY_PATH }}" # Ensure user owns the deployment dir
+
+          # Copy service template to a temporary location on the server if not already there by checkout
+          # Assuming the code is checked out to WORKING_DIR by the deploy workflow first.
+          # If this setup runs before any code is on server, this step needs adjustment.
+          # For now, we assume 'deployment/templates/bot.service.template' is accessible at $SERVICE_TEMPLATE_PATH
+          
+          echo "Configuring service file from template: \$SERVICE_TEMPLATE_PATH"
+          # Create a temporary configured service file
+          TEMP_SERVICE_FILE="/tmp/\$SERVICE_FILE_NAME" # Escaped
+          
+          # Replace placeholders in the template and write to temp file
+          # Note: Using single quotes for sed script to prevent local shell expansion of variables like $WORKING_DIR
+          # Variables like ACTUAL_BOT_DESCRIPTION, DEPLOY_USER, WORKING_DIR, PYTHON_PATH, MAIN_SCRIPT are expanded from the script's env
+          sed -e "s|\${BOT_DESCRIPTION}|${ACTUAL_BOT_DESCRIPTION}|g" \
+              -e "s|\${USER}|${{ env.DEPLOY_USER }}|g" \
+              -e "s|\${WORKING_DIR}|${WORKING_DIR//\//\\/}|g" \
+              -e "s|\${PYTHON_PATH}|${PYTHON_PATH//\//\\/}|g" \
+              -e "s|\${MAIN_SCRIPT}|${MAIN_SCRIPT//\//\\/}|g" \
+              "\$SERVICE_TEMPLATE_PATH" > "\$TEMP_SERVICE_FILE"
+
+          echo "Moving configured service file to \$REMOTE_SERVICE_FILE_PATH"
+          sudo mv "\$TEMP_SERVICE_FILE" "\$REMOTE_SERVICE_FILE_PATH"
+          sudo chmod 644 "\$REMOTE_SERVICE_FILE_PATH"
+          
+          echo "Reloading systemd daemon, enabling and starting service: \$SERVICE_FILE_NAME"
+          sudo systemctl daemon-reload
+          sudo systemctl enable "\$SERVICE_FILE_NAME"
+          sudo systemctl restart "\$SERVICE_FILE_NAME" # Use restart to ensure it starts even if already running/failed
+          sudo systemctl status "\$SERVICE_FILE_NAME" --no-pager
+          
+          echo "--- Initial Server Setup Completed ---"
+        EOF
+    - name: Notify setup success
+      if: success()
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"🚀 Initial server setup successful for ${{ github.repository }}", "channel":"#deployments"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi
+
+    - name: Notify setup failure
+      if: failure()
+      run: |
+        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ Initial server setup failed for ${{ github.repository }}", "channel":"#deployments"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+        fi

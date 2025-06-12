@@ -1,4 +1,4 @@
-name: Deploy Telegram Bot
+name: Application Deployment
 
 on:
   push:
@@ -8,18 +8,12 @@ on:
       environment:
         description: 'Deployment environment'
         required: true
-        default: 'production'
+        default: 'prod'
         type: choice
         options:
-        - production
-        - staging
+        - prod
       force_deploy:
         description: 'Force deployment (skip health checks)'
-        required: false
-        default: false
-        type: boolean
-      skip_backup:
-        description: 'Skip database backup'
         required: false
         default: false
         type: boolean
@@ -66,8 +60,8 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    
+    if: github.ref == 'refs/heads/main'
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -90,9 +84,8 @@ jobs:
           DEPLOY_OPTIONS="$DEPLOY_OPTIONS --force"
         fi
         
-        if [[ "${{ github.event.inputs.skip_backup }}" == "true" ]]; then
-          DEPLOY_OPTIONS="$DEPLOY_OPTIONS --no-backup"
-        fi
+        # This workflow does not handle backups. Add --no-backup.
+        DEPLOY_OPTIONS="$DEPLOY_OPTIONS --no-backup"
         
         # Execute deployment
         ssh ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
@@ -101,10 +94,10 @@ jobs:
           # Navigate to deployment directory
           cd ${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}
           
-          # Pull latest changes
+          # Pull latest changes from main branch
           git fetch origin
-          git checkout master
-          git pull origin master
+          git checkout main
+          git pull origin main
           
           # Make deployment scripts executable
           chmod +x deployment/*.sh
@@ -112,7 +105,7 @@ jobs:
           # Run deployment
           ./deployment/deploy.sh \
             --repo-url "${{ github.repositoryUrl }}" \
-            --branch "master" \
+            --branch "main" \
             --env-file "/home/${{ env.DEPLOY_USER }}/configs/.env" \
             $DEPLOY_OPTIONS
         EOF
