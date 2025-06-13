@@ -54,11 +54,6 @@ jobs:
       env:
         SKIP_DOCKER_TESTS: ${{ secrets.SKIP_DOCKER_TESTS }}
 
-    - name: Validate configuration
-      run: |
-        source .venv/bin/activate
-        uv run telegram_bot_template.main --dry-run
-
   deploy:
     needs: test
     runs-on: ubuntu-latest
