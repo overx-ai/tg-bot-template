@@ -32,7 +32,15 @@ jobs:
     environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'prod' }}
     # Run if manually dispatched OR if the 'Application CI Tests' workflow on 'main' succeeded
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
     steps:
+    - name: Debug secrets
+      run: |
+        echo "SSH_PRIVATE_KEY length: ${#SSH_PRIVATE_KEY}"
+        echo "SERVER_HOST: ${SERVER_HOST:0:5}..." # Show first 5 chars only
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
     - name: Checkout code
       uses: actions/checkout@v4
       with:
