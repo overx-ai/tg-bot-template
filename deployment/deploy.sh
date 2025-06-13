@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Telegram Bot Deployment Script
-# Simple, effective deployment with backup and health checks
+# Simple, effective deployment with health checks
 
 set -euo pipefail
 
@@ -13,8 +13,6 @@ LOG_FILE="${SCRIPT_DIR}/logs/deploy_$(date +%Y%m%d_%H%M%S).log"
 # Default values
 REPO_URL=""
 BRANCH="main"
-BACKUP_ENABLED=true
-S3_BUCKET=""
 ENV_FILE=""
 DRY_RUN=false
 FORCE=false
@@ -72,9 +70,6 @@ Telegram Bot Deployment Script
 OPTIONS:
     --repo-url URL          Git repository URL
     --branch BRANCH         Branch to deploy (default: main)
-    --backup                Enable database backup (default: true)
-    --no-backup             Disable database backup
-    --s3-bucket BUCKET      S3 bucket for backups
     --env-file FILE         Path to environment file
     --dry-run               Simulate deployment without changes
     --force                 Skip health checks and force deployment
@@ -84,7 +79,6 @@ OPTIONS:
 
 EXAMPLES:
     $0 --repo-url "git@github.com:user/repo.git"
-    $0 --backup --s3-bucket "my-backups"
     $0 --dry-run
     $0 --rollback "backup_20240108_010000.sql"
 
@@ -101,18 +95,6 @@ parse_args() {
                 ;;
             --branch)
                 BRANCH="$2"
-                shift 2
-                ;;
-            --backup)
-                BACKUP_ENABLED=true
-                shift
-                ;;
-            --no-backup)
-                BACKUP_ENABLED=false
-                shift
-                ;;
-            --s3-bucket)
-                S3_BUCKET="$2"
                 shift 2
                 ;;
             --env-file)
@@ -159,11 +141,6 @@ check_prerequisites() {
         fi
     done
     
-    # Check AWS CLI if S3 backup is enabled
-    if [[ -n "$S3_BUCKET" ]] && ! command -v "aws" &> /dev/null; then
-        error_exit "AWS CLI not found but S3 backup is enabled"
-    fi
-    
     # Check configuration variables
     if [[ -z "$REPO_URL" ]]; then
         error_exit "Repository URL not specified"
@@ -193,35 +170,6 @@ health_check() {
         fi
     else
         log "WARNING" "Health check script not found, skipping"
-    fi
-}
-
-# Database backup
-backup_database() {
-    if [[ "$BACKUP_ENABLED" != "true" ]]; then
-        log "INFO" "Database backup disabled"
-        return 0
-    fi
-    
-    log "INFO" "Creating database backup..."
-    
-    if [[ -f "${SCRIPT_DIR}/backup-db.sh" ]]; then
-        local backup_args=""
-        if [[ -n "$S3_BUCKET" ]]; then
-            backup_args="--s3-bucket $S3_BUCKET"
-        fi
-        
-        if [[ "$DRY_RUN" == "true" ]]; then
-            backup_args="$backup_args --dry-run"
-        fi
-        
-        if "${SCRIPT_DIR}/backup-db.sh" $backup_args; then
-            log "SUCCESS" "Database backup completed"
-        else
-            error_exit "Database backup failed"
-        fi
-    else
-        error_exit "Backup script not found: ${SCRIPT_DIR}/backup-db.sh"
     fi
 }
 
@@ -455,7 +403,6 @@ main() {
     # Main deployment process
     check_prerequisites
     health_check
-    backup_database
     deploy_code
     setup_environment
     run_migrations

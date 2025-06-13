@@ -25,7 +25,7 @@ To enable these workflows, you need to configure the following secrets in your G
 
 ### Required Secrets
 
--   **For `ci-deploy.yml` and `backup_workflow.yml`**:
+-   **For `ci-deploy.yml`, `backup_workflow.yml` (and `initial_server_setup.yml` if applicable for SSH operations)**:
     -   `SSH_PRIVATE_KEY`: Your private SSH key that allows access to your deployment server. Ensure the corresponding public key is added to the `authorized_keys` file for the `DEPLOY_USER` on your server.
     -   `SERVER_HOST`: The hostname or IP address of your deployment server.
 
@@ -33,16 +33,18 @@ To enable these workflows, you need to configure the following secrets in your G
 
 -   **For `cd-test.yml`**:
     -   `SKIP_DOCKER_TESTS`: (Optional) Set to `true` to skip tests that might require Docker.
--   **For `ci-deploy.yml` and `backup_workflow.yml` (and optionally `cd-test.yml` if test notifications are added)**:
-    -   `SLACK_WEBHOOK`: Your Slack incoming webhook URL. If provided, status notifications (deployment, rollback, backup) will be sent to the configured Slack channel.
+-   **For Notifications (used by `cd-test.yml`, `ci-deploy.yml`, `backup_workflow.yml`, `initial_server_setup.yml`)**:
+    -   `TELEGRAM_BOT_TOKEN`: Your Telegram Bot's API token.
+    -   `TELEGRAM_CHAT_ID`: The ID of the Telegram chat where notifications will be sent.
+    -   If these secrets are provided, status notifications (test results, deployment, rollback, backup, server setup) will be sent to the specified Telegram chat.
 
 ### Environment Variables
 
 The following environment variables are primarily configured within the workflow files:
 
--   `REPO_NAME` (e.g., `tg-bot-template`): Used in `cd-test.yml`, `ci-deploy.yml`, and `backup_workflow.yml`.
--   `DEPLOY_USER` (default: `jack`): Used in `ci-deploy.yml` and `backup_workflow.yml`.
--   `DEPLOY_PATH` (default: `/home/jack/JACK`): Used in `ci-deploy.yml` and `backup_workflow.yml`.
+-   `REPO_NAME` (e.g., `tg-bot-template`): Used in `cd-test.yml`, `ci-deploy.yml`, `backup_workflow.yml`, and `initial_server_setup.yml`.
+-   `DEPLOY_USER` (default: `jack`): Used in `ci-deploy.yml`, `backup_workflow.yml`, and `initial_server_setup.yml`.
+-   `DEPLOY_PATH` (default: `/home/jack/JACK`): Used in `ci-deploy.yml`, `backup_workflow.yml`, and `initial_server_setup.yml`.
 
-You can modify `DEPLOY_USER` and `DEPLOY_PATH` directly in [`.github/workflows/ci-deploy.yml`](./.github/workflows/ci-deploy.yml:1) and [`.github/workflows/backup_workflow.yml`](.github/workflows/backup_workflow.yml) if your server setup differs.
+You can modify `DEPLOY_USER` and `DEPLOY_PATH` directly in [`.github/workflows/ci-deploy.yml`](./.github/workflows/ci-deploy.yml:1), [`.github/workflows/backup_workflow.yml`](.github/workflows/backup_workflow.yml), and [`.github/workflows/initial_server_setup.yml`](./.github/workflows/initial_server_setup.yml) if your server setup differs.
 The `REPO_NAME` can be modified in all respective workflow files if needed.

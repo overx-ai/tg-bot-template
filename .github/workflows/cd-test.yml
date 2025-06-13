@@ -2,9 +2,9 @@ name: Application CI Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -40,3 +40,29 @@ jobs:
         uv run pytest tests/ -v
       env:
         SKIP_DOCKER_TESTS: ${{ secrets.SKIP_DOCKER_TESTS }}
+
+    - name: Notify test success
+      if: success()
+      run: |
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="✅ CI Tests successful for ${{ github.repository }} (commit: ${{ github.sha }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping success notification."
+        fi
+
+    - name: Notify test failure
+      if: failure()
+      run: |
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="❌ CI Tests failed for ${{ github.repository }} (commit: ${{ github.sha }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping failure notification."
+        fi

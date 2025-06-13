@@ -58,9 +58,6 @@ jobs:
           DEPLOY_OPTIONS="$DEPLOY_OPTIONS --force"
         fi
         
-        # This workflow does not handle backups. Add --no-backup.
-        DEPLOY_OPTIONS="$DEPLOY_OPTIONS --no-backup"
-        
         # Determine environment (only relevant for manual dispatch, deploy.sh handles env from .env file)
         # ENV_FILE_ARG=""
         # if [[ "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment }}" == "prod" ]]; then
@@ -79,7 +76,7 @@ jobs:
           # Consider if an explicit git pull main is still needed if deploy.sh already does it.
           # For now, keeping it similar to original for deploy.sh to manage.
           git fetch origin
-          git checkout main 
+          git checkout main
           git pull origin main
           
           # Make deployment scripts executable
@@ -109,25 +106,32 @@ jobs:
     - name: Notify success
       if: success()
       run: |
-        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"✅ Deployment successful for ${{ github.repository }} (commit: ${{ github.sha }})", "channel":"#deployments"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="✅ Deployment successful for ${{ github.repository }} (commit: ${{ github.sha }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping success notification."
         fi
 
     - name: Notify failure
       if: failure()
       run: |
-        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"❌ Deployment failed for ${{ github.repository }} (commit: ${{ github.sha }})", "channel":"#deployments"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="❌ Deployment failed for ${{ github.repository }} (commit: ${{ github.sha }})"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping failure notification."
         fi
-
-  rollback:
+rollback:
     runs-on: ubuntu-latest
-    if: failure() && needs.deploy.result == 'failure'
-    needs: [deploy] # Changed from [test, deploy]
+    if: failure() && needs.deploy.result == 'failure' 
+    needs: [deploy] 
     
     steps:
     - name: Setup SSH
@@ -166,8 +170,12 @@ jobs:
 
     - name: Notify rollback
       run: |
-        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"🔄 Automatic rollback completed for ${{ github.repository }}", "channel":"#deployments"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="🔄 Automatic rollback completed for ${{ github.repository }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping rollback notification."
         fi

@@ -57,17 +57,25 @@ jobs:
     - name: Notify backup success
       if: success()
       run: |
-        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"💾 Database backup successful for ${{ github.repository }}", "channel":"#backups"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="💾 Database backup successful for ${{ github.repository }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping success notification."
         fi
 
     - name: Notify backup failure
       if: failure()
       run: |
-        if [[ -n "${{ secrets.SLACK_WEBHOOK }}" ]]; then
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"❌ Database backup failed for ${{ github.repository }}", "channel":"#backups"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+          MESSAGE="❌ Database backup failed for ${{ github.repository }}"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=${MESSAGE}"
+          echo
+        else
+          echo "Telegram Bot Token or Chat ID not configured. Skipping failure notification."
         fi
