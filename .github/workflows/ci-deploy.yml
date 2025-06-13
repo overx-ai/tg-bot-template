@@ -19,7 +19,7 @@ on:
     workflows: ["Application CI Tests"] # Name of the cd-test.yml workflow
     types:
       - completed
-    branches: [main]
+    branches: [master]
 
 env:
   DEPLOY_USER: jack

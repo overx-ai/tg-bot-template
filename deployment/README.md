@@ -12,13 +12,13 @@ To enable these workflows, you need to configure the following secrets in your G
 -   **Application CI Tests (`cd-test.yml`)**:
     -   **Purpose**: Runs automated tests (e.g., Pytest) against the codebase.
     -   **Triggers**:
-        -   On `push` to the `main` branch.
-        -   On `pull_request` targeting the `main` branch.
+        -   On `push` to the `master` branch.
+        -   On `pull_request` targeting the `master` branch.
         -   Manually via `workflow_dispatch`.
 -   **Application Deployment (`ci-deploy.yml`)**:
     -   **Purpose**: Deploys the application to the server and handles automatic rollbacks on failure.
     -   **Triggers**:
-        -   Automatically after the "Application CI Tests" workflow completes successfully on the `main` branch.
+        -   Automatically after the "Application CI Tests" workflow completes successfully on the `master` branch.
         -   Manually via `workflow_dispatch` with inputs for `environment` and `force_deploy`.
 -   **Database Backups (`backup_workflow.yml`)**:
     -   (Description for this workflow, assuming it exists as per original README)
