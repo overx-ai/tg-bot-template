@@ -1,8 +1,6 @@
 name: Application Deployment
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       environment:
@@ -17,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+  workflow_run:
+    workflows: ["Application CI Tests"] # Name of the cd-test.yml workflow
+    types:
+      - completed
+    branches: [main]
 
 env:
   DEPLOY_USER: jack
@@ -24,44 +27,17 @@ env:
   REPO_NAME: tg-bot-template
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-    - name: Install dependencies
-      run: |
-        uv venv
-        source .venv/bin/activate
-        uv sync
-        uv sync --extra dev
-
-    - name: Run tests
-      run: |
-        source .venv/bin/activate
-        uv run pytest tests/ -v
-      env:
-        SKIP_DOCKER_TESTS: ${{ secrets.SKIP_DOCKER_TESTS }}
-
   deploy:
-    needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
+    # Run if manually dispatched OR if the 'Application CI Tests' workflow on 'main' succeeded
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        # Checkout the specific commit from the completed 'cd-test' workflow run
+        # or the latest commit on 'main' if manually dispatched.
+        ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
 
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
@@ -77,13 +53,20 @@ jobs:
         # Set deployment options
         DEPLOY_OPTIONS=""
         
-        if [[ "${{ github.event.inputs.force_deploy }}" == "true" ]]; then
+        # For manual dispatch, check input. For workflow_run, force_deploy isn't an input.
+        if [[ "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy }}" == "true" ]]; then
           DEPLOY_OPTIONS="$DEPLOY_OPTIONS --force"
         fi
         
         # This workflow does not handle backups. Add --no-backup.
         DEPLOY_OPTIONS="$DEPLOY_OPTIONS --no-backup"
         
+        # Determine environment (only relevant for manual dispatch, deploy.sh handles env from .env file)
+        # ENV_FILE_ARG=""
+        # if [[ "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment }}" == "prod" ]]; then
+        #   ENV_FILE_ARG="--env-file /home/${{ env.DEPLOY_USER }}/configs/.env" # Example, adjust as needed
+        # fi
+
         # Execute deployment
         ssh ${{ env.DEPLOY_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -e
@@ -91,15 +74,20 @@ jobs:
           # Navigate to deployment directory
           cd ${{ env.DEPLOY_PATH }}/${{ env.REPO_NAME }}
           
-          # Pull latest changes from main branch
+          # Pull latest changes from main branch (deploy.sh handles this, but good for consistency if not using workflow_run's SHA)
+          # If using workflow_run's head_sha, the checkout above already has the correct commit.
+          # Consider if an explicit git pull main is still needed if deploy.sh already does it.
+          # For now, keeping it similar to original for deploy.sh to manage.
           git fetch origin
-          git checkout main
+          git checkout main 
           git pull origin main
           
           # Make deployment scripts executable
           chmod +x deployment/*.sh
           
           # Run deployment
+          # The --branch "main" might be redundant if head_sha is checked out.
+          # The --repo-url is also usually for the initial clone by deploy.sh if the repo isn't there.
           ./deployment/deploy.sh \
             --repo-url "${{ github.repositoryUrl }}" \
             --branch "main" \
@@ -139,7 +127,7 @@ jobs:
   rollback:
     runs-on: ubuntu-latest
     if: failure() && needs.deploy.result == 'failure'
-    needs: [test, deploy]
+    needs: [deploy] # Changed from [test, deploy]
     
     steps:
     - name: Setup SSH
