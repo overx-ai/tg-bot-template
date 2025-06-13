@@ -19,6 +19,8 @@ env:
   DEPLOY_USER: jack # Default deploy user, can be overridden by secrets or inputs if needed
   DEPLOY_PATH: /home/jack/JACK # Default deploy path
   REPO_NAME: tg-bot-template # Your repository name
+  BOT_DESCRIPTION_DEFAULT: tg bot template by YM
+
 
 jobs:
   setup_server:
@@ -44,9 +46,9 @@ jobs:
         BOT_DESCRIPTION_INPUT: ${{ github.event.inputs.bot_description }}
       run: |
         # Determine DB_USER: use input if provided, else default to DEPLOY_USER
-        ACTUAL_DB_USER=${DB_USER_INPUT:-${DEPLOY_USER}}
+        ACTUAL_DB_USER=bot
         # Determine BOT_DESCRIPTION: use input if provided, else use default from workflow
-        ACTUAL_BOT_DESCRIPTION=${BOT_DESCRIPTION_INPUT:-'${{ env.BOT_DESCRIPTION_DEFAULT || 'Telegram Bot Service' }}'}
+        ACTUAL_BOT_DESCRIPTION=${BOT_DESCRIPTION_INPUT:-'${{ env.BOT_DESCRIPTION_DEFAULT }}'}
         
         echo "Starting initial server setup on ${{ secrets.SERVER_HOST }}"
         echo "Deploy User: ${{ env.DEPLOY_USER }}"
