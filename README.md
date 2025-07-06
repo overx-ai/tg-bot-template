@@ -1,469 +1,151 @@
-[![Deploy Telegram Bot](https://github.com/hustlestar/tg-bot-template/actions/workflows/deploy.yml/badge.svg)](https://github.com/hustlestar/tg-bot-template/actions/workflows/deploy.yml)
-# Simplified Telegram Bot Template
+# 🤖 Telegram Bot Cookiecutter Template
 
-A clean, maintainable Telegram bot template with essential features and modern architecture.
+A modern, production-ready cookiecutter template for creating Telegram bots in Python. Get your bot running in minutes with built-in CI/CD, database migrations, and multi-language support.
 
-## 🚀 Features
-
-- **🌐 Locale Management** - Multi-language support with easy translation management
-- **⌨️ Keyboard Management** - Dynamic inline keyboards with language-aware buttons
-- **🤖 OpenRouter AI Integration** - Modern AI provider with multiple model support
-- **🆘 Optional Support Bot** - Built-in support system for user assistance
-- **💾 Database with Migrations** - PostgreSQL with Alembic migration management
-- **🔄 Auto-Migration** - Automatic schema updates on bot startup
-- **🎛️ Click CLI** - Command-line interface with migration commands
-- **📝 Clean Architecture** - Well-organized, extensible codebase
-
-## 📁 Project Structure
-
-```
-telegram_bot_template/
-├── __init__.py                    # Package initialization
-├── main.py                        # Entry point with click options
-├── cli.py                         # CLI commands for migrations
-├── config/
-│   ├── __init__.py
-│   └── settings.py               # Configuration management
-├── core/
-│   ├── __init__.py
-│   ├── bot.py                    # Main bot class
-│   ├── database.py               # Database operations with migrations
-│   ├── migration_manager.py      # Alembic migration management
-│   ├── locale_manager.py         # Localization support
-│   ├── keyboard_manager.py       # Keyboard management
-│   └── ai_provider.py            # OpenRouter integration
-├── models/
-│   ├── __init__.py               # SQLAlchemy metadata
-│   ├── base.py                   # Base table definitions
-│   └── users.py                  # Users table schema
-├── handlers/
-│   ├── __init__.py
-│   ├── basic.py                  # Basic commands (/start, /help, /about)
-│   └── message.py                # Message handling with AI
-├── support/
-│   ├── __init__.py
-│   └── bot.py                    # Optional support bot
-└── utils/
-    ├── __init__.py
-    └── helpers.py                # Utility functions
-
-alembic/                           # Database migration files
-├── env.py                        # Alembic environment configuration
-├── script.py.mako               # Migration template
-└── versions/                     # Migration version files
-    └── 001_initial_users_table.py
-
-alembic.ini                       # Alembic configuration
-```
-
-## 🛠️ Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd telegram-bot-template
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   # or with uv
-   uv pip install -r requirements.txt
-   ```
-
-3. **Setup environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Setup database**
-   ```bash
-   # Create PostgreSQL database
-   createdb botdb
-   ```
-
-## ⚙️ Configuration
-
-### Required Environment Variables
-
-```env
-# Required
-TELEGRAM_BOT_TOKEN=your_bot_token_here
-DATABASE_URL=postgresql://user:password@localhost:5432/botdb
-```
-
-### Optional Environment Variables
-
-```env
-# OpenRouter AI (optional)
-OPENROUTER_API_KEY=your_openrouter_api_key_here
-OPENROUTER_MODEL=openai/gpt-3.5-turbo
-
-# Support Bot (optional)
-SUPPORT_BOT_TOKEN=your_support_bot_token_here
-SUPPORT_CHAT_ID=your_support_chat_id_here
-
-# Bot Metadata (optional)
-BOT_NAME=My Telegram Bot
-BOT_DESCRIPTION=A simple Telegram bot
-BOT_VERSION=1.0.0
-
-# Localization (optional)
-DEFAULT_LANGUAGE=en
-SUPPORTED_LANGUAGES=en,ru,es
-
-# Logging (optional)
-LOG_LEVEL=INFO
-```
-
-## 🚀 Usage
-
-### Basic Usage
+## 🚀 Quick Start
 
 ```bash
-# Start the bot
-python -m telegram_bot_template.main
+# Install cookiecutter
+pip install cookiecutter
 
-# Start with specific language
-python -m telegram_bot_template.main --locale ru
+# Generate your bot
+cookiecutter https://github.com/hustlestar/tg-bot-template.git
 
-# Start in debug mode
-python -m telegram_bot_template.main --debug
-
-# Validate configuration without starting
-python -m telegram_bot_template.main --dry-run
+# Follow the prompts, then:
+cd your-bot-name
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your bot token
+python -m main
 ```
 
-### CLI Commands
+That's it! Your bot is running. See [QUICKSTART.md](QUICKSTART.md) for detailed setup.
+
+## ✨ Features
+
+### Core Features
+- **🌐 Multi-language Support** - Built-in localization system
+- **⌨️ Dynamic Keyboards** - Inline keyboard management
+- **💾 PostgreSQL + Migrations** - Alembic for schema management
+- **🔄 Auto-migrations** - Database updates on startup
+- **📝 Clean Architecture** - Organized src/ layout
+
+### Optional Features (configured during generation)
+- **🤖 AI Integration** - OpenRouter support for GPT/Claude
+- **🆘 Support System** - Built-in support bot functionality
+- **🐳 Docker Support** - Docker & docker-compose files
+- **🚀 GitHub Actions** - Automated CI/CD pipeline
+
+### DevOps & Deployment
+- **⚙️ Systemd Service** - Production deployment scripts
+- **🔐 Organization Secrets** - GitHub secrets management
+- **📊 Automated Testing** - pytest with async support
+- **🎯 Type Checking** - mypy configuration
+
+## 📋 Template Options
+
+When you run `cookiecutter`, you'll be asked:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `project_name` | Your bot's display name | My Telegram Bot |
+| `project_slug` | Directory/package name | my-telegram-bot |
+| `bot_username` | Telegram @username | my_telegram_bot |
+| `use_openrouter` | Enable AI features? | y |
+| `use_support_bot` | Enable support system? | n |
+| `use_github_actions` | Include CI/CD? | y |
+| `use_docker` | Include Docker files? | y |
+| `python_version` | Python version | 3.11 |
+
+## 🏗️ Generated Project Structure
+
+```
+your-bot-name/
+├── src/                    # Clean Python package
+│   ├── main.py            # Entry point
+│   ├── cli.py             # CLI commands
+│   ├── config/            # Settings management
+│   ├── core/              # Bot core functionality
+│   ├── handlers/          # Command handlers
+│   ├── models/            # Database models
+│   └── utils/             # Helpers
+├── tests/                 # Test suite
+├── deployment/            # Deployment scripts
+│   ├── setup.sh          # First-time setup
+│   ├── deploy.sh         # Quick updates
+│   └── *.service         # Systemd service
+├── .github/workflows/     # CI/CD pipelines
+├── locales/              # Translation files
+├── migrations/           # Database migrations
+├── requirements.txt      # Dependencies
+├── .env.example         # Environment template
+└── docker-compose.yml   # Docker setup
+```
+
+## 🔧 Prerequisites
+
+- Python 3.10+
+- PostgreSQL
+- Telegram Bot Token from [@BotFather](https://t.me/botfather)
+- (Optional) OpenRouter API key for AI features
+
+## 🚀 Deployment
+
+### GitHub Actions (Recommended)
+
+1. Set up organization secrets (see [scripts/SECRETS_README.md](scripts/SECRETS_README.md))
+2. Push to GitHub
+3. Automatic deployment on push to main!
+
+### Manual Deployment
 
 ```bash
-# Initialize configuration file
-python -m telegram_bot_template.main init-config
-
-# Validate configuration
-python -m telegram_bot_template.main validate
-
-# Test AI connection
-python -m telegram_bot_template.main test-ai
-
-# Test database connection
-python -m telegram_bot_template.main test-db
-
-# Show bot statistics
-python -m telegram_bot_template.main --stats
+# On your server
+git clone your-repo
+cd your-bot
+./deployment/setup.sh  # First time
+./deployment/deploy.sh # Updates
 ```
 
-## 💾 Database Migrations
+## 🛠️ Development
 
-The template uses Alembic for professional database schema management with automatic migration support.
-
-### Automatic Migrations
-
-By default, the bot automatically applies pending migrations on startup:
+### Testing the Template
 
 ```bash
-# Bot will check and apply migrations automatically
-python -m telegram_bot_template.main
-```
+# Clone this template
+git clone https://github.com/hustlestar/tg-bot-template.git
+cd tg-bot-template
 
-### Manual Migration Commands
-
-```bash
-# Check migration status
-telegram-bot-template db status
-
-# Apply all pending migrations
-telegram-bot-template migrate
-
-# Create a new migration
-telegram-bot-template db revision -m "Add new table"
-
-# Apply migrations manually
-telegram-bot-template db upgrade
-
-# Rollback to previous migration
-telegram-bot-template db downgrade
-
-# Show migration history
-telegram-bot-template db history
-
-# Show current revision
-telegram-bot-template db current
-```
-
-### Migration Configuration
-
-Control migration behavior with environment variables:
-
-```env
-# Enable/disable automatic migrations (default: true)
-AUTO_MIGRATE=true
-
-# Migration timeout in seconds (default: 300)
-MIGRATION_TIMEOUT=300
-```
-
-### Creating New Migrations
-
-1. **Modify your models** in `telegram_bot_template/models/`
-2. **Generate migration**:
-   ```bash
-   telegram-bot-template db revision --autogenerate -m "Description of changes"
-   ```
-3. **Review the generated migration** in `alembic/versions/`
-4. **Apply the migration**:
-   ```bash
-   telegram-bot-template db upgrade
-   ```
-
-### Migration Best Practices
-
-- **Always review** auto-generated migrations before applying
-- **Test migrations** in a staging environment first
-- **Backup your database** before applying migrations in production
-- **Use descriptive messages** when creating migrations
-- **Keep migrations small** and focused on single changes
-
-### Programmatic Usage
-
-```python
-from telegram_bot_template import TelegramBot, BotConfig
-
-# Load configuration from environment
-config = BotConfig.from_env()
-
-# Create and run bot
-bot = TelegramBot(config)
-await bot.run()
-```
-
-## 🤖 AI Integration
-
-The template uses OpenRouter for AI functionality, which provides access to multiple AI models through a unified API.
-
-### Supported Models
-
-- OpenAI GPT models (gpt-3.5-turbo, gpt-4, etc.)
-- Anthropic Claude models
-- Google PaLM models
-- And many more through OpenRouter
-
-### Getting OpenRouter API Key
-
-1. Visit [OpenRouter.ai](https://openrouter.ai)
-2. Sign up for an account
-3. Generate an API key
-4. Add it to your `.env` file
-
-## 🆘 Support Bot
-
-The optional support bot allows users to send messages directly to administrators.
-
-### Setup Support Bot
-
-1. Create a second bot with @BotFather
-2. Get the bot token
-3. Get your Telegram user ID (chat with @userinfobot)
-4. Add both to your `.env` file:
-   ```env
-   SUPPORT_BOT_TOKEN=your_support_bot_token
-   SUPPORT_CHAT_ID=your_telegram_user_id
-   ```
-
-### How It Works
-
-- Users send messages to the support bot
-- Messages are forwarded to the admin
-- Admin replies to forwarded messages
-- Replies are sent back to users
-
-## 🌐 Localization
-
-### Adding New Languages
-
-1. Create a new JSON file in `locales/` directory:
-   ```bash
-   cp locales/en.json locales/de.json
-   ```
-
-2. Translate the strings in the new file
-
-3. Add the language to supported languages:
-   ```env
-   SUPPORTED_LANGUAGES=en,ru,es,de
-   ```
-
-### Translation Keys
-
-The template includes these translation keys:
-
-- `welcome_message` - Bot welcome message
-- `help_message` - Help text
-- `about_message` - About text
-- `language_changed` - Language change confirmation
-- `processing` - Processing message
-- `error_occurred` - Generic error message
-- And more...
-
-## 📊 Database Schema
-
-The template uses a simple database schema with just a users table:
-
-```sql
-CREATE TABLE users (
-    user_id BIGINT PRIMARY KEY,
-    username VARCHAR(255),
-    language VARCHAR(10) DEFAULT 'en',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## 🔒 Secrets Management
-
-The project includes tools for secure GitHub organization secrets management. See [scripts/SECRETS_README.md](scripts/SECRETS_README.md) for detailed documentation.
-
-### Quick Start
-
-```bash
 # Install dependencies
-pip install -r scripts/requirements-secrets.txt
+pip install -r requirements.txt
 
-# Run the secrets manager
-./scripts/manage-org-secrets.sh
+# Run template tests
+pytest tests/test_cookiecutter_template.py
 ```
 
-### GitHub Actions Integration
-
-Access organization secrets in your workflows:
-
-```yaml
-env:
-  BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-```
-
-## 🔧 Development
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=telegram_bot_template
-```
-
-### Code Formatting
-
-```bash
-# Format code
-black telegram_bot_template/
-isort telegram_bot_template/
-
-# Type checking
-mypy telegram_bot_template/
-```
-
-### Adding New Features
-
-1. **New Handlers**: Add to `handlers/` directory
-2. **New Commands**: Register in `core/bot.py`
-3. **New Keyboards**: Add to `keyboard_manager.py`
-4. **New Translations**: Add to locale files
-
-## 🐳 Docker Deployment
-
-```bash
-# Build image
-docker build -t telegram-bot .
-
-# Run with docker-compose
-docker-compose up -d
-```
-
-## 📝 Examples
-
-### Simple Echo Bot
-
-```python
-from telegram_bot_template import TelegramBot, BotConfig
-
-config = BotConfig.from_env()
-config.openrouter_api_key = None  # Disable AI
-
-bot = TelegramBot(config)
-await bot.run()
-```
-
-### AI-Powered Bot
-
-```python
-from telegram_bot_template import TelegramBot, BotConfig
-
-config = BotConfig.from_env()
-# AI will be enabled if OPENROUTER_API_KEY is set
-
-bot = TelegramBot(config)
-await bot.run()
-```
-
-### Custom Configuration
-
-```python
-from telegram_bot_template import TelegramBot, BotConfig
-
-config = BotConfig(
-    bot_token="your_token",
-    database_url="postgresql://...",
-    bot_name="Custom Bot",
-    default_language="ru"
-)
-
-bot = TelegramBot(config)
-await bot.run()
-```
-
-## 🤝 Contributing
+### Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create your feature branch
 3. Make your changes
-4. Add tests
+4. Run tests
 5. Submit a pull request
+
+## 📚 Documentation
+
+- [QUICKSTART.md](QUICKSTART.md) - Get started in 5 minutes
+- [scripts/SECRETS_README.md](scripts/SECRETS_README.md) - Organization secrets setup
+
+## 🤝 Support
+
+- Create an issue for bugs/features
+- Check existing issues before posting
+- PRs welcome!
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-- Create an issue for bug reports
-- Join our Telegram group for discussions
-- Check the documentation for detailed guides
-
-## 🔄 Migration from Complex Template
-
-If you're migrating from the complex template:
-
-1. **Database**: Only the users table is needed
-2. **Configuration**: Update environment variables
-3. **AI Provider**: Replace OpenAI with OpenRouter
-4. **Features**: Remove payment/subscription code
-5. **Handlers**: Simplify message handling
-
-## 🎯 Roadmap
-
-- [ ] Plugin system for extensions
-- [ ] Webhook support
-- [ ] Admin dashboard
-- [ ] Message scheduling
-- [ ] User analytics
-- [ ] Rate limiting
-- [ ] Message templates
+MIT License - see LICENSE file
 
 ---
 
-**Made with ❤️ for the Telegram bot community**
+Built with ❤️ for rapid Telegram bot development
