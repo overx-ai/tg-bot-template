@@ -45,15 +45,17 @@ dev = [
 ]
 
 [project.scripts]
-{{ cookiecutter.project_slug }} = "{{ cookiecutter.project_slug.replace('-', '_') }}.cli:main"
-{{ cookiecutter.bot_username }} = "{{ cookiecutter.project_slug.replace('-', '_') }}.cli:main"
+{{ cookiecutter.project_slug }} = "cli:main"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["{{ cookiecutter.project_slug.replace('-', '_') }}"]
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.black]
 line-length = 140

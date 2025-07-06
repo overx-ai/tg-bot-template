@@ -14,7 +14,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY {{ cookiecutter.project_slug.replace('-', '_') }}/ {{ cookiecutter.project_slug.replace('-', '_') }}/
+COPY src/ src/
 COPY alembic/ alembic/
 COPY alembic.ini .
 COPY locales/ locales/
@@ -24,4 +24,4 @@ RUN useradd -m -u 1000 botuser && chown -R botuser:botuser /app
 USER botuser
 
 # Run the bot
-CMD ["python", "-m", "{{ cookiecutter.project_slug.replace('-', '_') }}.main"]
+CMD ["python", "-m", "main"]

@@ -6,8 +6,8 @@ import sys
 
 import click
 
-from telegram_bot_template.config.settings import BotConfig
-from telegram_bot_template.core.bot import TelegramBot
+from config.settings import BotConfig
+from core.bot import TelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ def main(locale: str, debug: bool, support: bool, config_file: str, dry_run: boo
     - Simple user database
 
     Examples:
-        python -m telegram_bot_template.main --locale ru --debug
-        python -m telegram_bot_template.main --support --dry-run
+        python -m {{ cookiecutter.project_slug.replace('-', '_') }} --locale ru --debug
+        python -m {{ cookiecutter.project_slug.replace('-', '_') }} --support --dry-run
     """
 
     # Setup basic logging first

@@ -28,28 +28,17 @@ def remove_directory(dirpath):
         print(f"Removed directory: {dirpath}")
 
 
-def copy_workflow_templates():
-    """Copy GitHub workflow templates from the template directory."""
-    # Get the template directory (parent of the generated project)
-    template_dir = Path("..").resolve()
-    workflow_templates = template_dir / ".github" / "workflows" / "templates"
+def make_scripts_executable():
+    """Make deployment scripts executable."""
+    scripts = [
+        "deployment/deploy.sh",
+        "deployment/setup.sh"
+    ]
     
-    if not workflow_templates.exists():
-        print("Warning: Workflow templates directory not found")
-        return
-    
-    # Create .github/workflows directory in the generated project
-    workflows_dir = Path(".github") / "workflows"
-    workflows_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Copy and process workflow templates
-    for template_file in workflow_templates.glob("*.j2"):
-        # Remove .j2 extension
-        output_file = workflows_dir / template_file.stem
-        
-        # Copy the file (it's already been processed by cookiecutter)
-        shutil.copy2(template_file, output_file)
-        print(f"Created workflow: {output_file}")
+    for script in scripts:
+        if Path(script).exists():
+            os.chmod(script, 0o755)
+            print(f"Made executable: {script}")
 
 
 def main():
@@ -61,13 +50,12 @@ def main():
         remove_file("Dockerfile")
         remove_file("docker-compose.yml")
     
-    # Copy GitHub workflows if enabled
-    if "{{ cookiecutter.use_github_actions }}" == "y":
-        copy_workflow_templates()
+    # Make scripts executable
+    make_scripts_executable()
     
     # Remove support bot module if not used
     if "{{ cookiecutter.use_support_bot }}" != "y":
-        remove_directory("{{ cookiecutter.project_slug.replace('-', '_') }}/support")
+        remove_directory("src/support")
     
     # Initialize git repository
     if "{{ cookiecutter.use_github_actions }}" == "y":
@@ -85,7 +73,7 @@ def main():
     print("4. createdb {{ cookiecutter.database_name }}")
     print("5. pip install -r requirements.txt")
     print("6. {{ cookiecutter.project_slug }} migrate")
-    print("7. {{ cookiecutter.project_slug }}")
+    print("7. python -m main  # or {{ cookiecutter.project_slug }}")
     
     if "{{ cookiecutter.use_github_actions }}" == "y":
         print("\n🔐 Don't forget to set up GitHub organization secrets!")

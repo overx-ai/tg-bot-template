@@ -1,0 +1,32 @@
+[Unit]
+Description={{ cookiecutter.bot_name }}
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=bot
+Group=bot
+WorkingDirectory=/home/bot/{{ cookiecutter.project_slug }}
+Environment="PATH=/home/bot/{{ cookiecutter.project_slug }}/venv/bin"
+ExecStart=/home/bot/{{ cookiecutter.project_slug }}/venv/bin/python -m main
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/bot/{{ cookiecutter.project_slug }}
+
+# Resource limits
+MemoryLimit=512M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier={{ cookiecutter.project_slug }}
+
+[Install]
+WantedBy=multi-user.target

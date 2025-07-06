@@ -43,7 +43,7 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         TELEGRAM_BOT_TOKEN: test_token_123456
       run: |
-        pytest tests/ -v --cov={{ cookiecutter.project_slug.replace('-', '_') }}
+        pytest tests/ -v --cov=src
 
   deploy:
     needs: test
@@ -55,13 +55,13 @@ jobs:
     
     - name: Deploy to server
       env:
-        DEPLOY_KEY: ${{ '{{' }} secrets.DEPLOY_SSH_KEY {{ '}}' }}
-        SERVER_HOST: ${{ '{{' }} secrets.{{ cookiecutter.project_slug.upper().replace('-', '_') }}_SERVER_HOST {{ '}}' }}
-        SERVER_USER: ${{ '{{' }} secrets.{{ cookiecutter.project_slug.upper().replace('-', '_') }}_SERVER_USER {{ '}}' }}
-        BOT_TOKEN: ${{ '{{' }} secrets.{{ cookiecutter.project_slug.upper().replace('-', '_') }}_TELEGRAM_BOT_TOKEN {{ '}}' }}
-        DATABASE_URL: ${{ '{{' }} secrets.{{ cookiecutter.project_slug.upper().replace('-', '_') }}_DATABASE_URL {{ '}}' }}
+        DEPLOY_KEY: ${{ "{{ secrets.DEPLOY_SSH_KEY }}" }}
+        SERVER_HOST: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_SERVER_HOST{{ " }}" }}
+        SERVER_USER: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_SERVER_USER{{ " }}" }}
+        BOT_TOKEN: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_TELEGRAM_BOT_TOKEN{{ " }}" }}
+        DATABASE_URL: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_DATABASE_URL{{ " }}" }}
         {% if cookiecutter.use_openrouter == 'y' -%}
-        OPENROUTER_API_KEY: ${{ '{{' }} secrets.{{ cookiecutter.project_slug.upper().replace('-', '_') }}_OPENROUTER_API_KEY {{ '}}' }}
+        OPENROUTER_API_KEY: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_OPENROUTER_API_KEY{{ " }}" }}
         {%- endif %}
       run: |
         mkdir -p ~/.ssh
@@ -82,7 +82,7 @@ jobs:
         
         # Clone or pull repository
         if [ ! -d ".git" ]; then
-          git clone https://github.com/${{ '{{' }} github.repository {{ '}}' }}.git .
+          git clone https://github.com/${{ "{{ github.repository }}" }}.git .
         else
           git fetch origin
           git reset --hard origin/main || git reset --hard origin/master
@@ -111,7 +111,7 @@ jobs:
         EOL
         
         # Run migrations
-        python -m {{ cookiecutter.project_slug.replace('-', '_') }}.cli migrate
+        python -m cli migrate
         
         # Create systemd service if needed
         if [ ! -f "/etc/systemd/system/${SERVICE_NAME}.service" ]; then
@@ -125,7 +125,7 @@ jobs:
         User=$USER
         WorkingDirectory=$DEPLOY_PATH
         Environment="PATH=$DEPLOY_PATH/venv/bin"
-        ExecStart=$DEPLOY_PATH/venv/bin/python -m {{ cookiecutter.project_slug.replace('-', '_') }}.main
+        ExecStart=$DEPLOY_PATH/venv/bin/python -m main
         Restart=always
         RestartSec=10
 
