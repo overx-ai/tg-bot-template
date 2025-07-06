@@ -20,7 +20,8 @@ def slugify(name: str) -> str:
 
 def load_defaults() -> Dict[str, Any]:
     """Load default values from cookiecutter.json."""
-    cookiecutter_path = Path(__file__).parent / 'cookiecutter.json'
+    # The cookiecutter.json is in the parent directory of the CLI package
+    cookiecutter_path = Path(__file__).parent.parent / 'cookiecutter.json'
     with open(cookiecutter_path, 'r') as f:
         return json.load(f)
 
@@ -62,8 +63,8 @@ def create_bot(project_name: str, output_dir: str = ".",
             print("Install with: pip install cookiecutter")
             return False
         
-        # Get template path
-        template_path = str(Path(__file__).parent)
+        # Get template path (parent directory of the CLI package)
+        template_path = str(Path(__file__).parent.parent)
         
         # Create context
         context = {'project_name': project_name}

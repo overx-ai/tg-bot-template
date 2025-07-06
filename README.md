@@ -4,19 +4,26 @@ A modern, production-ready cookiecutter template for creating Telegram bots in P
 
 ## 🚀 Quick Start
 
-### Option 1: Simple Creation (Just provide name!)
+### Option 1: Install CLI Globally (Recommended)
 ```bash
-python create_bot.py "My Bot Name"
+# Install the CLI tools
+pip install git+https://github.com/hustlestar/tg-bot-template.git
+
+# Create a new bot from anywhere
+tgbot new "My Bot Name"
 ```
 
-### Option 2: Traditional Cookiecutter
+### Option 2: Direct Usage
+```bash
+# Clone and use directly
+git clone https://github.com/hustlestar/tg-bot-template.git
+cd tg-bot-template
+python tg_bot_template_cli/create_bot.py "My Bot Name"
+```
+
+### Option 3: Traditional Cookiecutter
 ```bash
 cookiecutter https://github.com/hustlestar/tg-bot-template.git
-```
-
-### Option 3: With Presets
-```bash
-python bot_factory.py "My AI Bot" --preset ai
 ```
 
 That's it! Your bot is created. See [PROJECT_CREATION_GUIDE.md](PROJECT_CREATION_GUIDE.md) for all creation methods and [QUICKSTART.md](QUICKSTART.md) for detailed setup.
@@ -139,6 +146,7 @@ pytest tests/test_cookiecutter_template.py
 
 ## 📚 Documentation
 
+- [INSTALLATION.md](INSTALLATION.md) - Install CLI tools globally
 - [QUICKSTART.md](QUICKSTART.md) - Get started in 5 minutes
 - [PROJECT_CREATION_GUIDE.md](PROJECT_CREATION_GUIDE.md) - All ways to create projects
 - [SECRETS_SETUP.md](SECRETS_SETUP.md) - Organization secrets setup

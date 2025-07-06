@@ -65,22 +65,24 @@ Repository = "https://github.com/hustlestar/tg-bot-template"
 Issues = "https://github.com/hustlestar/tg-bot-template/issues"
 
 [project.scripts]
-# CLI commands for the template
-tg-bot-create = "create_bot:main"
-tg-bot-factory = "bot_factory:main"
+# Main CLI command
+tgbot = "tg_bot_template_cli.cli:main"
+
+# Additional shortcuts (optional)
+tgbot-new = "tg_bot_template_cli.create_bot:main"
+tgbot-factory = "tg_bot_template_cli.bot_factory:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["create_bot", "bot_factory", "mcp_bot_creator"]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["scripts*"]
-exclude = ["tests*", "docs*"]
+include = ["tg_bot_template_cli*", "scripts*"]
+exclude = ["tests*", "docs*", "{{ cookiecutter.project_slug }}*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.yml", "*.json", "*.md", "*.txt"]

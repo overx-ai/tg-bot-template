@@ -67,7 +67,7 @@ class BotFactory:
     """Factory class for creating Telegram bot projects."""
     
     def __init__(self, template_dir: Optional[Path] = None):
-        self.template_dir = template_dir or Path(__file__).parent
+        self.template_dir = template_dir or Path(__file__).parent.parent
         self.cookiecutter_json = self.template_dir / 'cookiecutter.json'
         self.defaults = self._load_defaults()
     

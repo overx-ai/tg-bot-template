@@ -38,7 +38,7 @@ except ImportError:
             self.data = data
             self.error = error
 
-from bot_factory import BotFactory
+from .bot_factory import BotFactory
 
 
 class BotCreatorMCP:
