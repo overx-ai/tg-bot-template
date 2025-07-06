@@ -320,6 +320,30 @@ CREATE TABLE users (
 );
 ```
 
+## 🔒 Secrets Management
+
+The project includes tools for secure GitHub organization secrets management. See [scripts/SECRETS_README.md](scripts/SECRETS_README.md) for detailed documentation.
+
+### Quick Start
+
+```bash
+# Install dependencies
+pip install -r scripts/requirements-secrets.txt
+
+# Run the secrets manager
+./scripts/manage-org-secrets.sh
+```
+
+### GitHub Actions Integration
+
+Access organization secrets in your workflows:
+
+```yaml
+env:
+  BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+```
+
 ## 🔧 Development
 
 ### Running Tests

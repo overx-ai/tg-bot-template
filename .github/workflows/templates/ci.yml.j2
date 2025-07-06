@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '{{ cookiecutter.python_version }}'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort mypy
+    
+    - name: Check code formatting with black
+      run: black --check {{ cookiecutter.project_slug.replace('-', '_') }}/
+    
+    - name: Check import sorting with isort
+      run: isort --check-only {{ cookiecutter.project_slug.replace('-', '_') }}/
+    
+    - name: Type checking with mypy
+      run: mypy {{ cookiecutter.project_slug.replace('-', '_') }}/
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ '{{' }} matrix.python-version {{ '}}' }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ '{{' }} matrix.python-version {{ '}}' }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+    
+    - name: Run tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        TELEGRAM_BOT_TOKEN: test_token_123456
+      run: |
+        pytest tests/ -v --cov={{ cookiecutter.project_slug.replace('-', '_') }}

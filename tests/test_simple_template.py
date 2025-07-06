@@ -4,16 +4,14 @@ Test script for the simplified Telegram bot template.
 This script validates the configuration and tests core components.
 """
 
-import asyncio
 import logging
-import sys
 import pytest # Added import
 
-from telegram_bot_template.config.settings import BotConfig
-from telegram_bot_template.core.ai_provider import MockAIProvider
-from telegram_bot_template.core.database import DatabaseManager
-from telegram_bot_template.core.keyboard_manager import KeyboardManager
-from telegram_bot_template.core.locale_manager import LocaleManager
+from telegram_bot_template import BotConfig
+from telegram_bot_template import MockAIProvider
+from telegram_bot_template import DatabaseManager
+from telegram_bot_template import KeyboardManager
+from telegram_bot_template import LocaleManager
 
 # Setup logging
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)

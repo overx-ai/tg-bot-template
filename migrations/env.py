@@ -6,7 +6,6 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 # Use create_async_engine for async support
 from sqlalchemy.ext.asyncio import create_async_engine # Added
-from sqlalchemy import engine_from_config # Kept for offline or if needed
 
 from alembic import context
 
@@ -14,8 +13,8 @@ from alembic import context
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import our models and configuration
-from telegram_bot_template.models import metadata
-from telegram_bot_template.config.settings import BotConfig
+from telegram_bot_template import metadata
+from telegram_bot_template import BotConfig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

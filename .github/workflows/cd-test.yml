@@ -44,9 +44,9 @@ jobs:
     - name: Notify test success
       if: success()
       run: |
-        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+        if [[ -n "${{ secrets.PROJECT_NAME_TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
           MESSAGE="✅ CI Tests successful for ${{ github.repository }} (commit: ${{ github.sha }})"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.PROJECT_NAME_TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d "text=${MESSAGE}"
           echo
@@ -57,9 +57,9 @@ jobs:
     - name: Notify test failure
       if: failure()
       run: |
-        if [[ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
+        if [[ -n "${{ secrets.PROJECT_NAME_TELEGRAM_BOT_TOKEN }}" && -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]]; then
           MESSAGE="❌ CI Tests failed for ${{ github.repository }} (commit: ${{ github.sha }})"
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.PROJECT_NAME_TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d "text=${MESSAGE}"
           echo

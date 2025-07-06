@@ -5,3 +5,14 @@ venv
 .idea
 *.sql
 .venv
+
+# Secrets - NEVER commit these
+.secrets/
+*.secret
+*_secret.txt
+*_secret.json
+secrets.json
+secrets.yml
+secrets.yaml
+.github-secrets/
+org-secrets/

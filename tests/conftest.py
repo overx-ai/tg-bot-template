@@ -1,6 +1,6 @@
 import pytest
-from telegram_bot_template.config.settings import BotConfig
-from telegram_bot_template.core.locale_manager import LocaleManager
+from telegram_bot_template import BotConfig
+from telegram_bot_template import LocaleManager
 import logging
 from testcontainers.postgres import PostgresContainer
 import os

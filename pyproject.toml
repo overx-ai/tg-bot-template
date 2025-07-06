@@ -1,11 +1,11 @@
 [project]
-name = "telegram-bot-template"
-version = "1.0.0"
-description = "A highly extensible, OOP-based Telegram bot framework with plugin architecture, dependency injection, and support for multiple AI providers including OpenRouter"
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.project_description }}"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    {name = "Telegram Bot Template", email = "contact@example.com"}
+    {name = "{{ cookiecutter.author_name }}", email = "{{ cookiecutter.author_email }}"}
 ]
 license = {text = "MIT"}
 keywords = ["telegram", "bot", "framework", "ai", "openrouter", "openai", "extensible"]
@@ -14,7 +14,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: {{ cookiecutter.python_version }}",
     "Topic :: Communications :: Chat",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -45,19 +45,19 @@ dev = [
 ]
 
 [project.scripts]
-telegram-bot-template = "telegram_bot_template.cli:main"
-tg-bot = "telegram_bot_template.cli:main"
+{{ cookiecutter.project_slug }} = "{{ cookiecutter.project_slug.replace('-', '_') }}.cli:main"
+{{ cookiecutter.bot_username }} = "{{ cookiecutter.project_slug.replace('-', '_') }}.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["telegram_bot_template"]
+packages = ["{{ cookiecutter.project_slug.replace('-', '_') }}"]
 
 [tool.black]
 line-length = 140
-target-version = ['py311']
+target-version = ['py{{ cookiecutter.python_version.replace('.', '') }}']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -83,7 +83,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "{{ cookiecutter.python_version }}"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -117,7 +117,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["telegram_bot_template"]
+source = ["{{ cookiecutter.project_slug.replace('-', '_') }}"]
 omit = [
     "*/tests/*",
     "*/examples/*",
