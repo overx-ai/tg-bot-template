@@ -1,0 +1,153 @@
+name: Deploy {{ cookiecutter.bot_name }}
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '{{ cookiecutter.python_version }}'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+    
+    - name: Run tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        TELEGRAM_BOT_TOKEN: test_token_123456
+      run: |
+        pytest tests/ -v --cov=src
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to server
+      env:
+        DEPLOY_KEY: ${{ "{{ secrets.DEPLOY_SSH_KEY }}" }}
+        SERVER_HOST: ${{ "{{ secrets.SERVER_HOST }}" }}
+        SERVER_USER: ${{ "{{ secrets.SERVER_USER }}" }}
+        BOT_TOKEN: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_TELEGRAM_BOT_TOKEN{{ " }}" }}
+        DATABASE_URL: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_DATABASE_URL{{ " }}" }}
+        {% if cookiecutter.use_openrouter == 'y' -%}
+        OPENROUTER_API_KEY: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_OPENROUTER_API_KEY{{ " }}" }}
+        {%- endif %}
+        {% if cookiecutter.use_support_bot == 'y' -%}
+        SUPPORT_BOT_TOKEN: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_SUPPORT_BOT_TOKEN{{ " }}" }}
+        SUPPORT_CHAT_ID: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_SUPPORT_CHAT_ID{{ " }}" }}
+        {%- endif %}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+        
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
+        set -e
+        
+        # Configuration
+        DEPLOY_PATH="/home/$USER/bots/{{ cookiecutter.project_slug }}"
+        SERVICE_NAME="{{ cookiecutter.project_slug }}"
+        
+        # Create directory if needed
+        mkdir -p $DEPLOY_PATH
+        cd $DEPLOY_PATH
+        
+        # Clone or pull repository
+        if [ ! -d ".git" ]; then
+          git clone https://github.com/${{ "{{ github.repository }}" }}.git .
+        else
+          git fetch origin
+          git reset --hard origin/main || git reset --hard origin/master
+        fi
+        
+        # Create virtual environment if needed
+        if [ ! -d "venv" ]; then
+          python{{ cookiecutter.python_version }} -m venv venv
+        fi
+        
+        # Install dependencies
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        
+        # Create .env file
+        cat > .env << EOL
+        TELEGRAM_BOT_TOKEN=$BOT_TOKEN
+        DATABASE_URL=$DATABASE_URL
+        {% if cookiecutter.use_openrouter == 'y' -%}
+        OPENROUTER_API_KEY=$OPENROUTER_API_KEY
+        OPENROUTER_MODEL={{ cookiecutter.openrouter_model }}
+        {%- endif %}
+        {% if cookiecutter.use_support_bot == 'y' -%}
+        SUPPORT_BOT_TOKEN=$SUPPORT_BOT_TOKEN
+        SUPPORT_CHAT_ID=$SUPPORT_CHAT_ID
+        {%- endif %}
+        BOT_NAME={{ cookiecutter.bot_name }}
+        DEFAULT_LANGUAGE={{ cookiecutter.default_language }}
+        SUPPORTED_LANGUAGES={{ cookiecutter.supported_languages }}
+        PYTHONPATH=src
+        EOL
+        
+        # Run migrations
+        python -m cli migrate
+        
+        # Create systemd service if needed
+        if [ ! -f "/etc/systemd/system/${SERVICE_NAME}.service" ]; then
+          sudo tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null << EOL
+        [Unit]
+        Description={{ cookiecutter.bot_name }}
+        After=network.target
+
+        [Service]
+        Type=simple
+        User=$USER
+        WorkingDirectory=$DEPLOY_PATH
+        Environment="PATH=$DEPLOY_PATH/venv/bin"
+        ExecStart=$DEPLOY_PATH/venv/bin/python -m main
+        Restart=always
+        RestartSec=10
+
+        [Install]
+        WantedBy=multi-user.target
+        EOL
+          sudo systemctl daemon-reload
+          sudo systemctl enable ${SERVICE_NAME}.service
+        fi
+        
+        # Restart service
+        sudo systemctl restart ${SERVICE_NAME}.service
+        sleep 5
+        sudo systemctl status ${SERVICE_NAME}.service --no-pager
+        EOF

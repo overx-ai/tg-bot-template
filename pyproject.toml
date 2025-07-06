@@ -1,139 +1,153 @@
 [project]
-name = "telegram-bot-template"
-version = "1.0.0"
-description = "A highly extensible, OOP-based Telegram bot framework with plugin architecture, dependency injection, and support for multiple AI providers including OpenRouter"
+name = "tg-bot-template"
+version = "0.1.0"
+description = "A modern cookiecutter template for creating production-ready Telegram bots"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
+license = { text = "MIT" }
 authors = [
-    {name = "Telegram Bot Template", email = "contact@example.com"}
+    { name = "Jack Ma", email = "hustlequeen@mail.ru" }
 ]
-license = {text = "MIT"}
-keywords = ["telegram", "bot", "framework", "ai", "openrouter", "openai", "extensible"]
+keywords = ["telegram", "bot", "cookiecutter", "template", "python"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Communications :: Chat",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Communications :: Chat",
 ]
 
 dependencies = [
-    "aiohttp>=3.9.0",
-    "alembic>=1.13.0",
-    "asyncpg>=0.30.0",
-    "click>=8.1.8",
-    "openai>=1.75.0",
-    "psycopg2-binary>=2.9.0",
-    "python-dotenv>=1.1.0",
-    "python-telegram-bot>=22.0",
+    # Template creation and management
+    "cookiecutter>=2.1.0",
+    
+    # Secrets management
+    "PyNaCl==1.5.0",
     "pyyaml>=6.0.0",
-    "sqlalchemy>=2.0.0",
+    "requests>=2.31.0",
+    
+    # MCP integration
+    "mcp>=0.1.0",
 ]
 
 [project.optional-dependencies]
+# Development dependencies for template development
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
     "black>=23.0.0",
     "isort>=5.0.0",
     "mypy>=1.0.0",
-    "coverage>=7.0.0",
-    # "aiosqlite>=0.19.0", # No longer primary for tests if using Dockerized Postgres
-    "testcontainers[postgres]>=3.7.0" # For Dockerized PostgreSQL in tests
+    "ruff>=0.1.0",
 ]
 
+# Dependencies that will be used in generated projects
+# (for reference - these are in the template's requirements.txt)
+bot-runtime = [
+    "aiohttp>=3.9.0",
+    "alembic>=1.13.0", 
+    "asyncpg>=0.30.0",
+    "click>=8.1.8",
+    "psycopg2-binary>=2.9.0",
+    "python-dotenv>=1.1.0",
+    "python-telegram-bot>=22.0",
+    "pyyaml>=6.0.0",
+    "sqlalchemy>=2.0.0",
+    "openai>=1.75.0",  # For AI features
+]
+
+[project.urls]
+Homepage = "https://github.com/hustlestar/tg-bot-template"
+Repository = "https://github.com/hustlestar/tg-bot-template"
+Issues = "https://github.com/hustlestar/tg-bot-template/issues"
+
 [project.scripts]
-telegram-bot-template = "telegram_bot_template.cli:main"
-tg-bot = "telegram_bot_template.cli:main"
+# Main CLI command
+tgbot = "tg_bot_template_cli.cli:main"
+
+# Additional shortcuts (optional)
+tgbot-new = "tg_bot_template_cli.create_bot:main"
+tgbot-factory = "tg_bot_template_cli.bot_factory:main"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["telegram_bot_template"]
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tg_bot_template_cli*", "scripts*"]
+exclude = ["tests*", "docs*", "{{ cookiecutter.project_slug }}*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.yml", "*.json", "*.md", "*.txt"]
+
+[tool.uv]
+dev-dependencies = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    "{{ cookiecutter.project_slug }}",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "B008", # function calls in argument defaults
+]
 
 [tool.black]
-line-length = 140
+line-length = 100
 target-version = ['py311']
-include = '\.pyi?$'
-extend-exclude = '''
+exclude = '''
 /(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
+    \.git
   | \.venv
+  | venv
   | build
   | dist
+  | {{ cookiecutter.project_slug }}
 )/
 '''
 
 [tool.isort]
 profile = "black"
 line_length = 100
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
+skip = ["venv", ".venv", "{{ cookiecutter.project_slug }}"]
 
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
+ignore_missing_imports = true
+exclude = [
+    "{{ cookiecutter.project_slug }}",
+    "venv",
+    ".venv",
+]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session" # Added to address deprecation warning
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "--verbose",
-    "--tb=short"
-]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests"
-]
-
-[tool.coverage.run]
-source = ["telegram_bot_template"]
-omit = [
-    "*/tests/*",
-    "*/examples/*",
-    "*/__pycache__/*"
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"

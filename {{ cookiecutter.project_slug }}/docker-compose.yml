@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: {{ cookiecutter.project_slug }}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql://botuser:botpass@postgres:5432/{{ cookiecutter.database_name }}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bot-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: {{ cookiecutter.project_slug }}-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: botuser
+      POSTGRES_PASSWORD: botpass
+      POSTGRES_DB: {{ cookiecutter.database_name }}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U botuser -d {{ cookiecutter.database_name }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bot-network
+
+volumes:
+  postgres-data:
+
+networks:
+  bot-network:
+    driver: bridge
