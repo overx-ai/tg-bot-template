@@ -1,157 +1,247 @@
 # 🔐 Organization Secrets Setup Guide
 
-This guide will help you set up GitHub organization secrets for deploying bots created with this template.
+This guide explains how to set up GitHub organization secrets for deploying bots created with this template.
 
-## 📋 What You Need to Provide
+## 📋 Overview
 
-### 1. **GitHub Organization Details**
-- **Organization Name**: Your GitHub organization (e.g., `mycompany`)
-- **GitHub Token**: Personal access token with `admin:org` scope
-  - Go to GitHub → Settings → Developer settings → Personal access tokens
-  - Create token with `admin:org` and `repo` scopes
+The template uses a YAML-based configuration system for managing GitHub organization secrets. You define all your secrets in a single `secrets.yaml` file, and the setup script automatically creates them in GitHub.
 
-### 2. **Project Name**
-- **Project Identifier**: A unique name for your bot project (e.g., `WEATHERBOT`, `TODOBOT`)
-- This will prefix your secrets to avoid conflicts between projects
-- Use UPPERCASE letters and underscores only
+## 🚀 Quick Start
 
-### 3. **Required Secrets Values**
+1. **Copy the example configuration:**
+   ```bash
+   cp secrets.example.yaml secrets.yaml
+   ```
 
-#### Core Bot Secrets (Required)
+2. **Edit `secrets.yaml` with your values:**
+   ```bash
+   nano secrets.yaml  # or your favorite editor
+   ```
+
+3. **Run the setup script:**
+   ```bash
+   python scripts/setup_secrets.py
+   ```
+
+That's it! Your secrets are now configured in GitHub.
+
+## 📝 Configuration File Structure
+
+The `secrets.yaml` file has four main sections:
+
+### 1. GitHub Configuration
+```yaml
+github:
+  organization: "your-org-name"
+  token: "ghp_your_token_here"
+```
+
+- **organization**: Your GitHub organization name
+- **token**: Personal access token with `admin:org` scope
+  - Create at: https://github.com/settings/tokens
+  - Required scopes: `admin:org` and `repo`
+
+### 2. Project Configuration
+```yaml
+project:
+  name: "WEATHER_BOT"  # Used as prefix for secrets
+  repository: "weather-bot"  # Optional, for auto-linking
+```
+
+- **name**: Project identifier (UPPERCASE with underscores)
+- **repository**: Repository name (optional, for automatic linking)
+
+### 3. Secrets Definition
+```yaml
+secrets:
+  TELEGRAM_BOT_TOKEN:
+    value: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+    description: "Telegram Bot API token"
+    visibility: "selected"
+    prefix: true
+```
+
+Each secret can have:
+- **value**: The secret value (required)
+- **description**: Human-readable description
+- **visibility**: `all`, `private`, or `selected` (default: `selected`)
+- **prefix**: Whether to prefix with project name (default: `true`)
+
+### 4. Advanced Options
+```yaml
+advanced:
+  update_existing: true    # Update existing secrets
+  validate_values: true    # Validate secret formats
+  dry_run: false          # Test without creating
+```
+
+## 🔑 Required Secrets
+
+### Core Bot Configuration
+
 1. **TELEGRAM_BOT_TOKEN**
-   - Get from [@BotFather](https://t.me/botfather) on Telegram
+   - Get from [@BotFather](https://t.me/botfather)
    - Format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
-   - Each bot needs its own token
 
 2. **DATABASE_URL**
    - PostgreSQL connection string
-   - Format: `postgresql://username:password@host:5432/database_name`
-   - Example: `postgresql://botuser:secretpass@localhost:5432/weatherbot_db`
+   - Format: `postgresql://user:pass@host:5432/dbname`
 
-#### Deployment Secrets (Required for GitHub Actions)
+### Deployment Configuration
+
 3. **DEPLOY_SSH_KEY**
    - SSH private key for server access
-   - Generate: `ssh-keygen -t ed25519 -C "bot-deploy@example.com"`
-   - Copy the private key content (from `~/.ssh/id_ed25519`)
+   - Generate: `ssh-keygen -t ed25519 -C "deploy@example.com"`
    - Add public key to server's `~/.ssh/authorized_keys`
 
 4. **SERVER_HOST**
-   - Your server's IP address or hostname
-   - Example: `192.168.1.100` or `bot-server.example.com`
+   - Server IP or hostname
+   - Example: `192.168.1.100` or `bot.example.com`
 
 5. **SERVER_USER**
-   - Username on the deployment server
+   - Username on deployment server
    - Example: `ubuntu`, `deploy`, `bot`
 
-#### Optional Secrets
-6. **OPENROUTER_API_KEY** (if using AI features)
+### Optional Secrets
+
+6. **OPENROUTER_API_KEY**
+   - For AI features (if enabled)
    - Get from [OpenRouter.ai](https://openrouter.ai)
-   - Required only if `use_openrouter: y` in cookiecutter
 
-7. **SUPPORT_BOT_TOKEN** (if using support bot)
-   - Another bot token from @BotFather
-   - Required only if `use_support_bot: y` in cookiecutter
+7. **SUPPORT_BOT_TOKEN**
+   - For support bot feature
+   - Another token from @BotFather
 
-8. **SUPPORT_CHAT_ID** (if using support bot)
-   - Your Telegram user/chat ID
-   - Get it by messaging [@userinfobot](https://t.me/userinfobot)
+8. **SUPPORT_CHAT_ID**
+   - Admin chat ID for support
+   - Get from [@userinfobot](https://t.me/userinfobot)
 
-## 🚀 Quick Setup Process
+## 📋 Complete Example
 
-### Option 1: Interactive Setup (Recommended)
+Here's a complete `secrets.yaml` example:
 
+```yaml
+github:
+  organization: "acme-corp"
+  token: "ghp_1234567890abcdef"
+
+project:
+  name: "WEATHER_BOT"
+  repository: "weather-bot"
+
+secrets:
+  # Bot credentials
+  TELEGRAM_BOT_TOKEN:
+    value: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+    visibility: "selected"
+    prefix: true
+
+  DATABASE_URL:
+    value: "postgresql://bot:password@db.example.com:5432/weather_bot"
+    visibility: "selected"
+    prefix: true
+
+  # Deployment (shared across projects)
+  DEPLOY_SSH_KEY:
+    value: |
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAA...
+      -----END OPENSSH PRIVATE KEY-----
+    visibility: "selected"
+    prefix: false
+
+  SERVER_HOST:
+    value: "bot.example.com"
+    visibility: "selected"
+    prefix: false
+
+  SERVER_USER:
+    value: "deploy"
+    visibility: "selected"
+    prefix: false
+
+advanced:
+  dry_run: false  # Set to true to test without creating
+```
+
+## 🎯 Usage Patterns
+
+### Test Run (Dry Run)
+```yaml
+advanced:
+  dry_run: true  # Shows what would be created without actually creating
+```
+
+### Multiple Projects
+Create separate YAML files for each project:
 ```bash
-cd tg-bot-template
-pip install -r scripts/requirements-secrets.txt
-python scripts/setup-all-secrets.py
+python scripts/setup_secrets.py weather-bot-secrets.yaml
+python scripts/setup_secrets.py todo-bot-secrets.yaml
 ```
 
-This will guide you through:
-1. Entering your GitHub organization name
-2. Choosing a project name (e.g., `WEATHERBOT`)
-3. Entering each secret value securely
-4. Setting repository access permissions
-
-### Option 2: Manual Setup with Script
-
-```bash
-# Set environment variables
-export GITHUB_ORG="myorganization"
-export PROJECT_NAME="WEATHERBOT"
-export GITHUB_TOKEN="ghp_xxxxxxxxxxxxx"
-
-# Run the project secrets manager
-python scripts/manage-project-secrets.py
-```
-
-## 📝 Example Setup Session
-
-```
-$ python scripts/setup-all-secrets.py
-
-=== Telegram Bot Template - Organization Secrets Setup ===
-
-Do you want to use project-specific secrets (recommended)? (Y/n): y
-
-Enter your project name (e.g., 'mybot-prod'): WEATHERBOT
-Enter your GitHub organization name: mycompany
-
-Configuring secret: WEATHERBOT_TELEGRAM_BOT_TOKEN
-Description: Telegram Bot API token from @BotFather
-Enter value for 'WEATHERBOT_TELEGRAM_BOT_TOKEN' (or press Enter to skip): [hidden input]
-
-Configuring secret: WEATHERBOT_DATABASE_URL
-Description: PostgreSQL connection string
-Enter value for 'WEATHERBOT_DATABASE_URL' (or press Enter to skip): [hidden input]
-
-Enter repository name for project 'WEATHERBOT': weather-bot
-
-✓ Successfully created/updated 5 secrets for project 'WEATHERBOT'
-```
+### Shared vs Project-Specific Secrets
+- Set `prefix: false` for secrets shared across projects (e.g., deployment keys)
+- Set `prefix: true` for project-specific secrets (e.g., bot tokens)
 
 ## 🔍 Verifying Your Setup
 
-After setting up secrets, verify they're created:
+The script automatically lists all created secrets. You can also check manually:
 
-```bash
-# List your project secrets
-python scripts/manage-project-secrets.py
-# Choose option 2 (List project secrets)
-```
+1. Go to GitHub → Your Organization → Settings → Secrets and variables → Actions
+2. You should see your secrets listed with the correct visibility
 
-## 🚨 Important Notes
+## 🚨 Security Best Practices
 
-1. **Secret Naming**: With project prefix, your secrets will be named:
-   - `WEATHERBOT_TELEGRAM_BOT_TOKEN`
-   - `WEATHERBOT_DATABASE_URL`
-   - etc.
-
-2. **Repository Access**: When using `selected` visibility:
-   - Add your repository to the secret's access list
-   - This happens automatically if you provide the repo name
-
-3. **GitHub Actions**: The workflows expect secrets with project prefix:
-   ```yaml
-   env:
-     BOT_TOKEN: ${{ secrets.WEATHERBOT_TELEGRAM_BOT_TOKEN }}
-   ```
-
-4. **Security Best Practices**:
-   - Never commit secret values
-   - Rotate secrets every 90 days
-   - Use different secrets for dev/staging/prod
-   - Limit access to only necessary repositories
+1. **Never commit `secrets.yaml`** - It's already in `.gitignore`
+2. **Use strong values**:
+   - Long, random database passwords
+   - ED25519 SSH keys (more secure than RSA)
+3. **Limit visibility**:
+   - Use `selected` visibility when possible
+   - Only give access to repositories that need it
+4. **Rotate regularly**:
+   - Change secrets every 90 days
+   - Update both GitHub and your servers
 
 ## 🆘 Troubleshooting
 
-- **"Invalid GitHub token"**: Ensure token has `admin:org` scope
-- **"Organization not found"**: Check organization name and your access
-- **"Secret not available in workflow"**: Add repository to secret's access list
-- **"Failed to encrypt"**: Install PyNaCl: `pip install PyNaCl`
+### "Invalid GitHub token"
+- Ensure token has `admin:org` scope
+- Check token hasn't expired
+
+### "Organization not found"
+- Verify organization name spelling
+- Ensure you have admin access to the organization
+
+### "Secret not available in workflow"
+- For `selected` visibility, add repository to secret's access list
+- Check secret name matches exactly (including prefix)
+
+### "Failed to encrypt secret"
+- Install PyNaCl: `pip install PyNaCl`
+- Ensure you have internet connection
 
 ## 📚 Next Steps
 
-1. Run `cookiecutter` to generate your bot
-2. Push the generated project to GitHub
-3. Secrets will be automatically available in GitHub Actions
-4. Deploy with confidence! 🚀
+1. Create your bot with cookiecutter:
+   ```bash
+   cookiecutter https://github.com/yourusername/tg-bot-template.git
+   ```
+
+2. Push to GitHub:
+   ```bash
+   cd your-bot-name
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/yourorg/your-bot-name.git
+   git push -u origin main
+   ```
+
+3. Deployment will trigger automatically!
+
+## 🔗 Additional Resources
+
+- [GitHub Secrets Documentation](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+- [Template Quick Start Guide](QUICKSTART.md)
+- [Deployment Documentation]({{ cookiecutter.project_slug }}/deployment/README.md)

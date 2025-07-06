@@ -56,12 +56,16 @@ jobs:
     - name: Deploy to server
       env:
         DEPLOY_KEY: ${{ "{{ secrets.DEPLOY_SSH_KEY }}" }}
-        SERVER_HOST: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_SERVER_HOST{{ " }}" }}
-        SERVER_USER: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_SERVER_USER{{ " }}" }}
-        BOT_TOKEN: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_TELEGRAM_BOT_TOKEN{{ " }}" }}
-        DATABASE_URL: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_DATABASE_URL{{ " }}" }}
+        SERVER_HOST: ${{ "{{ secrets.SERVER_HOST }}" }}
+        SERVER_USER: ${{ "{{ secrets.SERVER_USER }}" }}
+        BOT_TOKEN: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_TELEGRAM_BOT_TOKEN{{ " }}" }}
+        DATABASE_URL: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_DATABASE_URL{{ " }}" }}
         {% if cookiecutter.use_openrouter == 'y' -%}
-        OPENROUTER_API_KEY: ${{ "{{ secrets." }}{{ cookiecutter.project_slug.upper().replace('-', '_') }}_OPENROUTER_API_KEY{{ " }}" }}
+        OPENROUTER_API_KEY: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_OPENROUTER_API_KEY{{ " }}" }}
+        {%- endif %}
+        {% if cookiecutter.use_support_bot == 'y' -%}
+        SUPPORT_BOT_TOKEN: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_SUPPORT_BOT_TOKEN{{ " }}" }}
+        SUPPORT_CHAT_ID: ${{ "{{ secrets." }}{{ cookiecutter.project_prefix }}_SUPPORT_CHAT_ID{{ " }}" }}
         {%- endif %}
       run: |
         mkdir -p ~/.ssh
@@ -104,10 +108,16 @@ jobs:
         DATABASE_URL=$DATABASE_URL
         {% if cookiecutter.use_openrouter == 'y' -%}
         OPENROUTER_API_KEY=$OPENROUTER_API_KEY
+        OPENROUTER_MODEL={{ cookiecutter.openrouter_model }}
+        {%- endif %}
+        {% if cookiecutter.use_support_bot == 'y' -%}
+        SUPPORT_BOT_TOKEN=$SUPPORT_BOT_TOKEN
+        SUPPORT_CHAT_ID=$SUPPORT_CHAT_ID
         {%- endif %}
         BOT_NAME={{ cookiecutter.bot_name }}
         DEFAULT_LANGUAGE={{ cookiecutter.default_language }}
         SUPPORTED_LANGUAGES={{ cookiecutter.supported_languages }}
+        PYTHONPATH=src
         EOL
         
         # Run migrations

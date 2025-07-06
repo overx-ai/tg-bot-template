@@ -93,7 +93,13 @@ your-bot-name/
 
 ### GitHub Actions (Recommended)
 
-1. Set up organization secrets (see [scripts/SECRETS_README.md](scripts/SECRETS_README.md))
+1. Set up organization secrets:
+   ```bash
+   cp secrets.example.yaml secrets.yaml
+   # Edit secrets.yaml with your values
+   python scripts/setup_secrets.py
+   ```
+   See [SECRETS_SETUP.md](SECRETS_SETUP.md) for details.
 2. Push to GitHub
 3. Automatic deployment on push to main!
 
@@ -134,7 +140,7 @@ pytest tests/test_cookiecutter_template.py
 ## 📚 Documentation
 
 - [QUICKSTART.md](QUICKSTART.md) - Get started in 5 minutes
-- [scripts/SECRETS_README.md](scripts/SECRETS_README.md) - Organization secrets setup
+- [SECRETS_SETUP.md](SECRETS_SETUP.md) - Organization secrets setup
 
 ## 🤝 Support
 

@@ -1,3 +1,4 @@
 # Requirements for the cookiecutter template
 cookiecutter>=2.1.0
 pytest>=7.0.0  # For testing the template
+PyNaCl==1.5.0

@@ -18,11 +18,13 @@ Before creating your first bot, set up GitHub organization secrets:
 git clone https://github.com/hustlestar/tg-bot-template.git
 cd tg-bot-template
 
-# Install dependencies for secrets management
-pip install -r scripts/requirements-secrets.txt
+# Copy and configure secrets
+cp secrets.example.yaml secrets.yaml
+nano secrets.yaml  # Edit with your values
 
-# Run the setup script
-python scripts/setup-all-secrets.py
+# Install dependencies and run setup
+pip install -r scripts/requirements-secrets.txt
+python scripts/setup_secrets.py
 ```
 
 This will guide you through setting up:
