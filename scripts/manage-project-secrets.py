@@ -58,7 +58,7 @@ class ProjectSecretsManager:
     
     def load_config(self) -> Dict[str, Any]:
         """Load secrets configuration from YAML file."""
-        config_path = Path(__file__).parent.parent / '.github' / 'workflows' / 'secrets-config.yml'
+        config_path = Path(__file__).parent / 'secrets-config.yml'
         if not config_path.exists():
             print_status(Colors.RED, f"Error: Configuration file not found at {config_path}")
             sys.exit(1)
