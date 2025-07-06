@@ -1,3 +1,47 @@
+Metadata-Version: 2.4
+Name: tg-bot-template
+Version: 0.1.0
+Summary: A modern cookiecutter template for creating production-ready Telegram bots
+Author-email: Jack Ma <hustlequeen@mail.ru>
+License: MIT
+Project-URL: Homepage, https://github.com/hustlestar/tg-bot-template
+Project-URL: Repository, https://github.com/hustlestar/tg-bot-template
+Project-URL: Issues, https://github.com/hustlestar/tg-bot-template/issues
+Keywords: telegram,bot,cookiecutter,template,python
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Communications :: Chat
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: cookiecutter>=2.1.0
+Requires-Dist: PyNaCl==1.5.0
+Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: mcp>=0.1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Provides-Extra: bot-runtime
+Requires-Dist: aiohttp>=3.9.0; extra == "bot-runtime"
+Requires-Dist: alembic>=1.13.0; extra == "bot-runtime"
+Requires-Dist: asyncpg>=0.30.0; extra == "bot-runtime"
+Requires-Dist: click>=8.1.8; extra == "bot-runtime"
+Requires-Dist: psycopg2-binary>=2.9.0; extra == "bot-runtime"
+Requires-Dist: python-dotenv>=1.1.0; extra == "bot-runtime"
+Requires-Dist: python-telegram-bot>=22.0; extra == "bot-runtime"
+Requires-Dist: pyyaml>=6.0.0; extra == "bot-runtime"
+Requires-Dist: sqlalchemy>=2.0.0; extra == "bot-runtime"
+Requires-Dist: openai>=1.75.0; extra == "bot-runtime"
+
 # 🤖 Telegram Bot Cookiecutter Template
 
 A modern, production-ready cookiecutter template for creating Telegram bots in Python. Get your bot running in minutes with built-in CI/CD, database migrations, and multi-language support.

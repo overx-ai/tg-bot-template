@@ -1,0 +1,151 @@
+[project]
+name = "tg-bot-template"
+version = "0.1.0"
+description = "A modern cookiecutter template for creating production-ready Telegram bots"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Jack Ma", email = "hustlequeen@mail.ru" }
+]
+keywords = ["telegram", "bot", "cookiecutter", "template", "python"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Communications :: Chat",
+]
+
+dependencies = [
+    # Template creation and management
+    "cookiecutter>=2.1.0",
+    
+    # Secrets management
+    "PyNaCl==1.5.0",
+    "pyyaml>=6.0.0",
+    "requests>=2.31.0",
+    
+    # MCP integration
+    "mcp>=0.1.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies for template development
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+# Dependencies that will be used in generated projects
+# (for reference - these are in the template's requirements.txt)
+bot-runtime = [
+    "aiohttp>=3.9.0",
+    "alembic>=1.13.0", 
+    "asyncpg>=0.30.0",
+    "click>=8.1.8",
+    "psycopg2-binary>=2.9.0",
+    "python-dotenv>=1.1.0",
+    "python-telegram-bot>=22.0",
+    "pyyaml>=6.0.0",
+    "sqlalchemy>=2.0.0",
+    "openai>=1.75.0",  # For AI features
+]
+
+[project.urls]
+Homepage = "https://github.com/hustlestar/tg-bot-template"
+Repository = "https://github.com/hustlestar/tg-bot-template"
+Issues = "https://github.com/hustlestar/tg-bot-template/issues"
+
+[project.scripts]
+# CLI commands for the template
+tg-bot-create = "create_bot:main"
+tg-bot-factory = "bot_factory:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["create_bot", "bot_factory", "mcp_bot_creator"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scripts*"]
+exclude = ["tests*", "docs*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.yml", "*.json", "*.md", "*.txt"]
+
+[tool.uv]
+dev-dependencies = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    "{{ cookiecutter.project_slug }}",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "B008", # function calls in argument defaults
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | {{ cookiecutter.project_slug }}
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip = ["venv", ".venv", "{{ cookiecutter.project_slug }}"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "{{ cookiecutter.project_slug }}",
+    "venv",
+    ".venv",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"

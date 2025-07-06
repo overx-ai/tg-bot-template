@@ -1,0 +1,3 @@
+[console_scripts]
+tg-bot-create = create_bot:main
+tg-bot-factory = bot_factory:main
