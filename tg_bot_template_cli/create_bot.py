@@ -71,8 +71,15 @@ def create_bot(project_name: str, output_dir: str = ".",
         # Strategy 1: Check if we're in development mode (editable install)
         cli_path = Path(__file__).parent.parent
         if (cli_path / "cookiecutter.json").exists():
-            template_path = str(cli_path)
-            print(f"📦 Using local development template")
+            # Check if we can actually access the template files
+            try:
+                with open(cli_path / "cookiecutter.json", 'r') as f:
+                    f.read()
+                template_path = str(cli_path)
+                print(f"📦 Using local development template")
+            except (PermissionError, OSError):
+                # Can't access local files, will use GitHub
+                pass
         
         # Strategy 2: Check if template is bundled with installation
         if not template_path:
