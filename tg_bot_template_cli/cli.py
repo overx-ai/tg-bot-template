@@ -8,7 +8,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from .create_bot import main as create_main
 from .bot_factory import main as factory_main
 from .mcp_bot_creator import main as mcp_main
 
@@ -72,27 +71,28 @@ Commands:
         return
     
     if args.command == 'new':
-        # Convert args to sys.argv for create_bot
-        sys.argv = ['create_bot.py', args.project_name]
-        if args.output != '.':
-            sys.argv.extend(['--output', args.output])
+        # Build extra context
+        extra_context = {}
         
-        # Add extra context for presets and options
+        # Add preset options
         if args.preset:
             from .bot_factory import PRESETS
             preset = PRESETS.get(args.preset)
             if preset:
                 if preset.use_openrouter == 'y':
-                    sys.argv.append('use_openrouter=y')
+                    extra_context['use_openrouter'] = 'y'
                 if preset.use_support_bot == 'y':
-                    sys.argv.append('use_support_bot=y')
+                    extra_context['use_support_bot'] = 'y'
         
+        # Add other options
         if not args.no_git:
-            sys.argv.append('git_init=y')
+            extra_context['git_init'] = 'y'
         if args.secrets:
-            sys.argv.append('create_secrets=y')
+            extra_context['create_secrets'] = 'y'
             
-        create_main()
+        # Call create_bot directly
+        from .create_bot import create_bot
+        create_bot(args.project_name, output_dir=args.output, extra_context=extra_context)
         
     elif args.command == 'factory':
         # Pass through to factory

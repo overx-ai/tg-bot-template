@@ -1,0 +1,10 @@
+include cookiecutter.json
+include README.md
+include LICENSE
+recursive-include {{ cookiecutter.project_slug }} *
+recursive-include hooks *
+recursive-include scripts *.py *.yaml *.yml
+recursive-include tg_bot_template_cli *.py
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude .DS_Store

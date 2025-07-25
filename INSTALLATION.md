@@ -9,18 +9,20 @@ This guide shows how to install the Telegram Bot Template CLI tools globally on 
 
 ## Installation Methods
 
-### Method 1: Install with uv (Recommended)
+### Method 1: Install with pipx (Recommended for Global Use)
+
+[pipx](https://pypa.github.io/pipx/) is the recommended tool for installing Python applications globally:
 
 ```bash
-# Clone the repository
-git clone https://github.com/hustlestar/tg-bot-template.git
-cd tg-bot-template
+# Install pipx if you haven't already
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
 
-# Install globally with uv
-uv pip install --system .
+# Install tg-bot-template globally
+pipx install git+https://github.com/hustlestar/tg-bot-template.git
 
-# Or install in user space
-uv pip install --user .
+# After installation, the GitHub template will be used automatically
+tgbot new "My Bot"
 ```
 
 ### Method 2: Install with pip
@@ -35,19 +37,33 @@ pip install .
 
 # Or install in user space
 pip install --user .
+
+# Or install from GitHub directly
+pip install git+https://github.com/hustlestar/tg-bot-template.git
 ```
 
-### Method 3: Install from GitHub directly
+**Note:** When installed globally, the CLI will automatically use the GitHub repository as the template source.
+
+### Method 3: Install with uv tools
 
 ```bash
-# Install latest from GitHub
-pip install git+https://github.com/hustlestar/tg-bot-template.git
+# Install as a uv tool
+uv tool install git+https://github.com/hustlestar/tg-bot-template.git
 
-# Or with uv
-uv pip install git+https://github.com/hustlestar/tg-bot-template.git
+# Use the tool
+tgbot new "My Bot"
 ```
 
-### Method 4: Development Installation
+### Method 4: Direct cookiecutter usage (No Installation Required)
+
+If you prefer not to install anything globally:
+
+```bash
+# Just use cookiecutter directly
+cookiecutter https://github.com/hustlestar/tg-bot-template.git
+```
+
+### Method 5: Development Installation
 
 For development, install in editable mode:
 

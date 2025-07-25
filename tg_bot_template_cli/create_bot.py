@@ -54,6 +54,8 @@ def create_cookiecutter_config(project_name: str, output_dir: str = ".",
 def create_bot(project_name: str, output_dir: str = ".", 
                extra_context: Optional[Dict[str, Any]] = None) -> bool:
     """Create a new bot project using cookiecutter."""
+    print(f"🔍 Starting bot creation for '{project_name}'")
+    
     try:
         # Import cookiecutter
         try:
@@ -63,8 +65,44 @@ def create_bot(project_name: str, output_dir: str = ".",
             print("Install with: pip install cookiecutter")
             return False
         
-        # Get template path (parent directory of the CLI package)
-        template_path = str(Path(__file__).parent.parent)
+        # Get template path - try multiple strategies
+        template_path = None
+        
+        # Strategy 1: Check if we're in development mode (editable install)
+        cli_path = Path(__file__).parent.parent
+        if (cli_path / "cookiecutter.json").exists():
+            template_path = str(cli_path)
+            print(f"📦 Using local development template")
+        
+        # Strategy 2: Check if template is bundled with installation
+        if not template_path:
+            # Look for template in the package installation directory
+            import importlib.resources
+            try:
+                # For Python 3.9+
+                if hasattr(importlib.resources, 'files'):
+                    pkg_files = importlib.resources.files('tg_bot_template_cli')
+                    template_marker = pkg_files.parent / 'cookiecutter.json'
+                    if template_marker.is_file():
+                        template_path = str(pkg_files.parent)
+                        print(f"📦 Using bundled template")
+            except:
+                pass
+        
+        # Strategy 3: Check site-packages for the template
+        if not template_path:
+            import site
+            for site_dir in site.getsitepackages():
+                possible_template = Path(site_dir) / "tg_bot_template_cli" / ".." / "cookiecutter.json"
+                if possible_template.exists():
+                    template_path = str(possible_template.parent.resolve())
+                    print(f"📦 Using installed template from site-packages")
+                    break
+        
+        # Strategy 4: Use git repository directly
+        if not template_path:
+            template_path = "https://github.com/hustlestar/tg-bot-template.git"
+            print("📦 Using remote template from GitHub...")
         
         # Create context
         context = {'project_name': project_name}
